@@ -43,6 +43,10 @@ server {
 ```bash
 sudo ln -s /etc/nginx/sites-available/hugo /etc/nginx/sites-enabled/
 ```
+禁用默认文件
+```bash
+sudo rm /etc/nginx/sites-enabled/default
+```
 
 ## 测试 Nginx 配置
 测试配置文件是否有语法错误：
@@ -57,8 +61,6 @@ sudo systemctl reload nginx
 ```bash
 sudo systemctl restart nginx
 ```
-
-
 
 ## 查看nginx的log日志
 
