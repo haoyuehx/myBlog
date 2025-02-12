@@ -76,7 +76,7 @@
 					<div class="col">
 						<div class="card">
 							{{ $img := (.Resources.ByType "image").GetMatch "*featured*" }}
-							{{ $img = $img.Fit "350x500" }}
+							{{ $img = $img.Fit "2000x2000" }}
 							{{ with $img }}
 							<img src="{{ .Permalink }}" alt="{{ $.Title }}" class="card-img-top">
 							{{ end }}

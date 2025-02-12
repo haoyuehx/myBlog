@@ -7,7 +7,7 @@
     <div class="card">
         <a href="{{ .Permalink }}" class="stretched-link"></a>
         {{ $img := (.Resources.ByType "image").GetMatch "*featured*" }}
-        {{ $img = $img.Fit "350x500" }}
+        {{ $img = $img.Fit "2000x2000" }}
         {{ with $img }}
             <img src="{{ .Permalink }}" alt="{{ $.Title }}" class="card-img">
         {{ end }}
@@ -20,7 +20,7 @@
         <div class="row g-0">
             <div class="col-md-12 col-lg-4 col-xl-5">
                 {{ $img := (.Resources.ByType "image").GetMatch "*featured*" }}
-                {{ $img = $img.Fit "400x500" }}
+                {{ $img = $img.Fit "2000x2000" }}
                 {{ with $img }}
                     <img src="{{ .Permalink }}" class="img-fluid rounded-start card-img-top" alt="...">
                 {{ end }}
