@@ -3,7 +3,7 @@ title: "使用nginx部署网站"
 date: 2025-02-10
 lastmod: 2025-02-10
 draft: false
-garden_tags: ["trees", "nap"]
+garden_tags: ["web服务器", "nginx"]
 summary: " "
 status: "growing"
 ---
