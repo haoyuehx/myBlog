@@ -6,7 +6,7 @@ copyright = "Haoyuehx ©"
 
 [params]
   name = "HaoyuehxのBlog"
-  description = "Red panda living in the eastern Himalayas."
+  description = "Programs are meant to be read by humans and only incidentally for computers to execute."
   initials = "Haoyue"
   googleAnalytics = ""
 
