@@ -1,0 +1,171 @@
+---
+title: "nju pa1.1"
+date: 2025-02-21
+lastmod: 2025-02-21
+draft: false
+garden_tags: ["CSAPP", "lldb", "debug"]
+summary: " "
+status: "growing"
+---
+
+## 运行第一个客户程序
+
+### 问题1 错误信息
+
+进入nemu文件夹，运行```make run```得到
+```shell
++ CC src/nemu-main.c
++ CC src/engine/interpreter/init.c
++ CC src/engine/interpreter/hostcall.c
++ CC src/device/io/map.c
++ CC src/device/io/mmio.c
++ CC src/device/io/port-io.c
++ CC src/isa/riscv32/reg.c
++ CC src/isa/riscv32/inst.c
++ CC src/isa/riscv32/init.c
++ CC src/isa/riscv32/system/mmu.c
++ CC src/isa/riscv32/system/intr.c
++ CC src/isa/riscv32/logo.c
++ CC src/isa/riscv32/difftest/dut.c
++ CC src/cpu/cpu-exec.c
++ CC src/cpu/difftest/ref.c
++ CC src/cpu/difftest/dut.c
++ CC src/monitor/sdb/expr.c
++ CC src/monitor/sdb/watchpoint.c
++ CC src/monitor/sdb/sdb.c
++ CC src/monitor/monitor.c
++ CC src/utils/log.c
++ CC src/utils/disasm.c
++ CC src/utils/state.c
++ CC src/utils/timer.c
++ CC src/memory/paddr.c
++ CC src/memory/vaddr.c
++ LD /home/haoyue/ics2024/nemu/build/riscv32-nemu-interpreter
+#	-@git add /home/haoyue/ics2024/nemu/.. -A --ignore-errors
+#	-@while (test -e .git/index.lock); do sleep 0.1; done
+#	-@(echo ">  "compile NEMU"" && echo 23241121  Haoyuehx  && uname -a && uptime) | git commit -F - -q --author='tracer-ics2024 <tracer@njuics.org>' --no-verify --allow-empty
+#	-@sync
+#	-@git add /home/haoyue/ics2024/nemu/.. -A --ignore-errors
+#	-@while (test -e .git/index.lock); do sleep 0.1; done
+#	-@(echo ">  "run NEMU"" && echo 23241121  Haoyuehx  && uname -a && uptime) | git commit -F - -q --author='tracer-ics2024 <tracer@njuics.org>' --no-verify --allow-empty
+#	-@sync
+/home/haoyue/ics2024/nemu/build/riscv32-nemu-interpreter --log=/home/haoyue/ics2024/nemu/build/nemu-log.txt  
+[src/utils/log.c:30 init_log] Log is written to /home/haoyue/ics2024/nemu/build/nemu-log.txt
+[src/memory/paddr.c:50 init_mem] physical memory area [0x80000000, 0x87ffffff]
+[src/monitor/monitor.c:51 load_img] No image is given. Use the default build-in image.
+[src/monitor/monitor.c:28 welcome] Trace: ON
+[src/monitor/monitor.c:31 welcome] If trace is enabled, a log file will be generated to record the trace. This may lead to a large log file. If it is not necessary, you can disable it in menuconfig
+[src/monitor/monitor.c:32 welcome] Build time: 16:32:13, Feb 21 2025
+Welcome to riscv32-NEMU!
+For help, type "help"
+[src/monitor/monitor.c:35 welcome] Exercise: Please remove me in the source code and compile NEMU again.
+riscv32-nemu-interpreter: src/monitor/monitor.c:36: void welcome(): Assertion `0' failed.
+make: *** [/home/haoyue/ics2024/nemu/scripts/native.mk:38: run] Aborted (core dumped)
+```
+注意到shell里面的这句话'Please remove me in the source code and compile NEMU again.
+riscv32-nemu-interpreter: src/monitor/monitor.c:36: void welcome(): Assertion `0' failed.'
+
+首先找到```src/monitor/monitor.c```将
+
+```c
+static void welcome() {
+  Log("Trace: %s", MUXDEF(CONFIG_TRACE, ANSI_FMT("ON", ANSI_FG_GREEN), ANSI_FMT("OFF", ANSI_FG_RED)));
+  IFDEF(CONFIG_TRACE, Log("If trace is enabled, a log file will be generated "
+        "to record the trace. This may lead to a large log file. "
+        "If it is not necessary, you can disable it in menuconfig"));
+  Log("Build time: %s, %s", __TIME__, __DATE__);
+  printf("Welcome to %s-NEMU!\n", ANSI_FMT(str(__GUEST_ISA__), ANSI_FG_YELLOW ANSI_BG_RED));
+  printf("For help, type \"help\"\n");
+  # Log("Exercise: Please remove me in the source code and compile NEMU again.");
+  # assert(0);
+}
+```
+后两行注释掉，nemu就可以正确运行。
+
+### 问题2 在运行NEMU之后直接键入q退出, 你会发现终端输出了一些错误信息. 
+```shell
+(nemu) q
+make: *** [/home/haoyue/ics2024/nemu/scripts/native.mk:38: run] Error 1
+```
+使用lldb debug
+```shell
+haoyue@haoyue:~/ics2024/nemu$ lldb ./build/riscv32-nemu-interpreter 
+(lldb) target create "./build/riscv32-nemu-interpreter"
+Current executable set to '/home/haoyue/ics2024/nemu/build/riscv32-nemu-interpreter' (x86_64).
+```
+首先找到键入q后调用的函数
+```c
+static int cmd_q(char *args) {
+  return -1;
+}
+```
+添加断点
+```shell
+(lldb) b cmd_q
+Breakpoint 1: where = riscv32-nemu-interpreter`cmd_q at sdb.c:53:3, address = 0x00000000000039f0
+```
+运行,输入q,单步调试
+```shell
+(lldb) run
+Process 119418 launched: '/home/haoyue/ics2024/nemu/build/riscv32-nemu-interpreter' (x86_64)
+[src/utils/log.c:30 init_log] Log is written to stdout
+[src/utils/log.c:30 init_log] Log is written to stdout
+[src/memory/paddr.c:50 init_mem] physical memory area [0x80000000, 0x87ffffff]
+[src/memory/paddr.c:50 init_mem] physical memory area [0x80000000, 0x87ffffff]
+[src/monitor/monitor.c:51 load_img] No image is given. Use the default build-in image.
+[src/monitor/monitor.c:51 load_img] No image is given. Use the default build-in image.
+[src/monitor/monitor.c:28 welcome] Trace: ON
+[src/monitor/monitor.c:28 welcome] Trace: ON
+[src/monitor/monitor.c:31 welcome] If trace is enabled, a log file will be generated to record the trace. This may lead to a large log file. If it is not necessary, you can disable it in menuconfig
+[src/monitor/monitor.c:31 welcome] If trace is enabled, a log file will be generated to record the trace. This may lead to a large log file. If it is not necessary, you can disable it in menuconfig
+[src/monitor/monitor.c:32 welcome] Build time: 16:37:26, Feb 21 2025
+[src/monitor/monitor.c:32 welcome] Build time: 16:37:26, Feb 21 2025
+Welcome to riscv32-NEMU!
+For help, type "help"
+(nemu) q
+Process 119418 stopped
+* thread #1, name = 'riscv32-nemu-in', stop reason = breakpoint 1.1
+    frame #0: 0x00005555555579f0 riscv32-nemu-interpreter`cmd_q(args=<unavailable>) at sdb.c:53:3
+   50  	
+   51  	static int cmd_q(char *args) {
+   52  	//   nemu_state.state = NEMU_QUIT;
+-> 53  	  return -1;
+   54  	}
+   55  	
+   56  	static int cmd_help(char *args);
+```
+发现返回```is_exit_status_bad()```
+```shell
+(lldb) s
+Process 119418 stopped
+* thread #1, name = 'riscv32-nemu-in', stop reason = step in
+    frame #0: 0x000055555555635d riscv32-nemu-interpreter`main(argc=<unavailable>, argv=<unavailable>) at nemu-main.c:34:10
+   31  	  /* Start engine. */
+   32  	  engine_start();
+   33  	
+-> 34  	  return is_exit_status_bad();
+   35  	}
+```
+发现good值是1
+```shell
+(lldb) s
+Process 119418 stopped
+* thread #1, name = 'riscv32-nemu-in', stop reason = step in
+    frame #0: 0x000055555555821f riscv32-nemu-interpreter`is_exit_status_bad at state.c:23:3
+   20  	int is_exit_status_bad() {
+   21  	  int good = (nemu_state.state == NEMU_END && nemu_state.halt_ret == 0) ||
+   22  	    (nemu_state.state == NEMU_QUIT);
+-> 23  	  return !good;
+   24  	}
+(lldb) print good
+(int) 1
+```
+应该修改cmd_q
+```c
+static int cmd_q(char *args) {
+  nemu_state.state = NEMU_QUIT;
+  return -1;
+}
+```
+
+
