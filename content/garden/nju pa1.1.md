@@ -1,7 +1,7 @@
 ---
 title: "nju pa1.1"
 date: 2025-02-21
-lastmod: 2025-02-21
+lastmod: 2025-02-22
 draft: false
 garden_tags: ["CSAPP", "lldb", "debug"]
 summary: " "
@@ -167,5 +167,110 @@ static int cmd_q(char *args) {
   return -1;
 }
 ```
+## 补全代码
+### 单步执行
+|命令|格式|使用举例|说明|
+|:-:|:-:|:-:|:-:|
+|单步执行|```si [N]```|```si 10```|让程序单步执行N条指令后暂停执行,当N没有给出时, 缺省为1|
 
+```cmd_table```添加命令
+```C
+static struct {
+  const char *name;
+  const char *description;
+  int (*handler) (char *);
+} cmd_table[] = {
+    { "help", "Display information about all supported commands", cmd_help },
+    { "c", "Continue the execution of the program", cmd_c },
+    { "q", "Exit NEMU", cmd_q },
+    { "si", "Step into n instructions", cmd_is },
+    /* TODO: Add more commands */
+};
+```
+实现方法
+```C
+static int cmd_is(char* args)
+{
+    int n_inst = 1;
+    char extra;
+    if (args == NULL) {
+        cpu_exec(n_inst);
+        return 0;
+    }
+    if (sscanf(args, "%d%c", &n_inst, &extra) != 1) {
+        printf("error: invalid thread index '%s'.\n", args);
+        return 0;
+    }
+    if (n_inst == 0) {
+        printf("error: Thread index 0 is out of range (valid values are 0 - 1).\n");
+        return 0;
+    }
+    cpu_exec(n_inst);
+    return 0;
+}
+```
+
+### 打印寄存器
+|命令|格式|使用举例|说明|
+| :-: | :-: | :-: | :-: |
+| 打印程序状态 | ```info SUBCMD``` | ```info r``` | 打印寄存器状态 |
+
+```cmd_table```添加命令
+```C
+static struct {
+  const char *name;
+  const char *description;
+  int (*handler) (char *);
+} cmd_table[] = {
+    { "help", "Display information about all supported commands", cmd_help },
+    { "c", "Continue the execution of the program", cmd_c },
+    { "q", "Exit NEMU", cmd_q },
+    { "si", "Step into n instructions", cmd_is },
+    { "info", "Print program status", cmd_info },
+    /* TODO: Add more commands */
+};
+```
+实现方法，调用```isa_reg_display()```
+```C
+static int cmd_info(char* args)
+{
+    if (args == NULL) {
+        printf("info: missing argument.\n");
+        return 0;
+    }
+    else if (strcmp(args, "r") == 0) {
+        isa_reg_display();
+        return 0;
+    }
+    // else if (strcmp(args, "w") == 0) {
+    //     return 0;
+    // }
+    else {
+        printf("Undefined info command: \"%s\".\n", args);
+        return 0;
+    }
+    return 0;
+}
+```
+```isa_reg_display()```实现方法
+```C
+void isa_reg_display()
+{
+    for (int i = 0; i < REG_NUM; i++) {
+        word_t val = cpu.gpr[i];
+        printf("%-4s 0x%-16x %d\n", regs[i], val, val);
+    }
+}
+
+word_t isa_reg_str2val(const char *s, bool *success) {
+    for (int i = 0; i < REG_NUM; i++) {
+        if (strcmp(s, regs[i]) == 0) {
+            *success = true;
+            return cpu.gpr[i];
+        }
+    }
+    *success = false;
+    return 0;
+}
+```
 
