@@ -1,7 +1,7 @@
 ---
 title: "nju pa1.1"
 date: 2025-02-21
-lastmod: 2025-02-22
+lastmod: 2025-03-06
 draft: false
 garden_tags: ["CSAPP", "lldb", "debug"]
 summary: " "
@@ -274,3 +274,71 @@ word_t isa_reg_str2val(const char *s, bool *success) {
 }
 ```
 
+### 扫描内存
+|     命令     |       格式        |   使用举例   |      说明      |
+| :----------: | :---------------: | :----------: | :------------: |
+| 扫描内存 | ```x N EXPR``` | ```x 10 $esp``` | 求出表达式EXPR的值, 将结果作为起始内存
+地址, 以十六进制形式输出连续的N个4字节 |
+
+```cmd_table```添加命令
+```C
+static struct {
+    const char* name;
+    const char* description;
+    int (*handler)(char*);
+} cmd_table[] = {
+    { "help", "Display information about all supported commands", cmd_help },
+    { "c", "Continue the execution of the program", cmd_c },
+    { "q", "Exit NEMU", cmd_q },
+    { "si", "Step into n instructions", cmd_is },
+    { "info", "Print program status", cmd_info },
+    { "x", "Examine memory", cmd_x },
+    /* TODO: Add more commands */
+};
+```
+实现方法，调用```vaddr_read(vaddr_t addr, int len)```
+在```sdb.h```文件添加一行
+```C
+word_t vaddr_read(vaddr_t addr, int len);
+```
+```cmd_x(char* args)```实现
+```C
+static int cmd_x(char* args)
+{
+
+    char* n_word = strtok(args, " ");
+    char* arg_expr = strtok(NULL, " ");
+    if (!n_word || !arg_expr) {
+        printf("Invalid arguments!\n");
+        return 0;
+    }
+    int len;
+    if (sscanf(n_word, "%d", &len) != 1) {
+        printf("error: first argument should be an integer, but got %s\n", n_word);
+        return 0;
+    }
+    word_t start_addr = 0;
+
+    if (sscanf(arg_expr, "%x", &start_addr) != 1) {
+        printf("error: require a hex expression, but got %s\n", arg_expr);
+        return 0;
+    }
+    if (start_addr < 0x80000000 || start_addr > 0x87ffffff) {
+        printf("Address 0x%x is out of bounds!\n", start_addr);
+        return 0;
+    }
+
+    for (int i = 0; i < len; i++) {
+        word_t current_addr = start_addr + i * 4;
+        word_t val = vaddr_read(current_addr, 4);
+        if (i == 0) {
+            printf("0x%x:", current_addr);
+        } else if (i % 4 == 0 && i != 0) {
+            printf("\n0x%x:", current_addr);
+        }
+        printf("\t0x%08x", val);
+    }
+    printf("\n");
+    return 0;
+}
+```
