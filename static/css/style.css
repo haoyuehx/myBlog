@@ -17,7 +17,7 @@
 /********************* General *********************/
 
 body {
-  font-family: var(--summary);
+  font-family: "LXGW WenKai Screen", sans-serif !important;
   font-weight: 300;
   color: var(--dark);
   background-color: var(--white);
@@ -115,6 +115,7 @@ blockquote {
 code {
   color: var(--grey);
   font-size: smaller;
+  font-family: "LXGW WenKai Screen", sans-serif;
 }
 .btn-link {
   text-decoration: none;
