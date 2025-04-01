@@ -20,7 +20,7 @@ sudo systemctl start nginx
 
 ## 配置Nginx
 在```/etc/nginx/sites-available```新建配置文件```hugo```
-```
+```bash
 sudo vim /etc/nginx/sites-available/hugo
 ```
 添加如下配置文件
