@@ -114,6 +114,7 @@ blockquote {
 }
 code {
   color: var(--grey);
+  font-size: smaller;
   font-family: "LXGW WenKai Screen", sans-serif;
 }
 .btn-link {
@@ -279,8 +280,9 @@ code {
 /********************* Content *********************/
 
 .main-content {
-  line-height: 40px;
-  font-size: 22px;
+    flex-grow: 1;
+    line-height: 40px;
+    font-size: 22px;
 }
 a {
   color: var(--blue);
@@ -305,6 +307,33 @@ a:hover {
   border-left-width: 5px;
   padding-left: 10px;
   border-color: var(--dark);
+}
+
+
+/********************* Sidebar *********************/
+
+.flex {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    /* gap 需要单位 */
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: 100%;
+    /* 让 .flex 充满父容器 */
+}
+
+.sidebar {
+    position: sticky;
+    top: 0;
+    flex-basis: 25%;
+    /* 让 sidebar 具有 25% 宽度 */
+    max-width: 25%;
+    /* 避免超过 25% */
+    overflow-y: auto;
+    background-color: var(--white);
+    padding: 20px;
+    align-self: flex-start;
 }
 
 /********************* Footer *********************/
