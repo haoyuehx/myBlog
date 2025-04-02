@@ -114,7 +114,6 @@ blockquote {
 }
 code {
   color: var(--grey);
-  font-size: 32px;
   font-family: "LXGW WenKai Screen", sans-serif;
 }
 .btn-link {
