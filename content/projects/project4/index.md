@@ -344,3 +344,330 @@ static int cmd_x(char* args)
     return 0;
 }
 ```
+### pa1.2
+主要修改 /nemu/src/monitor/expr.c
+
+#### 添加cmd_p命令
+首先，和前几个命令一样在```sdb.c```文件里添加```static int cmd_p(char* args);```
+
+需要实现的功能：
+1. 检测输入是否正确
+2. 如果输入正确，计算表达式的值
+
+```C
+static int cmd_p(char* args)
+{
+    if (args == NULL) {
+        printf("p: missing argument.\n");
+        return 0;
+    }
+    bool success = true;
+    word_t result = expr(args, &success);
+    if (success) {
+        printf("%u\n", result);
+    } else {
+        printf("Invalid expression: %s\n", args);
+    }
+    return 0;
+}
+```
+
+写完```static int cmd_p(char* args)```完善```expr(args, &success)```
+
+#### 正则表达式识别token
+首先在```enum```里添加```token```类型
+```enum``` 枚举类型是一种可以由用户自定义数据集的数据类型。
+ 枚举类型的每一个枚举值都**对应一个整型数**，默认情况下，第一个枚举值的值是0，然后依次增1，但也可以显示初始化任意一个枚举值对应的整形数，没定义的枚举值默认情况下在其前一个枚举值的对应整型数上加1.
+
+```C
+enum {
+    TK_NOTYPE = 256,
+    TK_EQ,      //257
+    /* TODO: Add more token types */
+    TK_HEX, // 十六进制整数
+    TK_UINT, // 十进制整数
+    TK_INT, // 负整数
+};
+```
+在```rules[]```数组里添加新的正则表达对应
+
+```C
+static struct rule {
+    const char* regex;
+    int token_type;
+} rules[] = {
+
+    /* TODO: Add more rules.
+     * Pay attention to the precedence level of different rules.
+     */
+
+    { "0x[0-9AaBbCcDdEeFf]+", TK_HEX }, // 十六进制整数
+    { "[0-9]+", TK_UINT }, // 十进制整数
+    { "-[0-9]+", TK_INT }, // 负整数
+    { " +", TK_NOTYPE }, // spaces
+    { "\\+", '+' }, // plus
+    { "==", TK_EQ }, // equal
+    { "-", '-' }, // 减号
+    { "\\*", '*' }, // 乘号
+    { "/", '/' }, // 除号
+    { "\\(", '(' }, // 左括号
+    { "\\)", ')' }, // 右括号
+};
+```
+最重要的部分:**token识别**
+
+主要思路:
+1. 通过正则表达式进行分词,得到token的位置和长度
+2. 首先对token长度进行判断
+3. 通过正则表达式识别出的token_type进行分类存储
+
+注意点:
+1. 每次存储完之后```nr_token```自增
+2. 存储时```tokens[nr_token].str```最后一位置为```\0```
+
+```c
+static bool make_token(char* e)
+{
+    int position = 0;
+    int i;
+    regmatch_t pmatch;
+
+    nr_token = 0;
+
+    while (e[position] != '\0') {
+        /* Try all rules one by one. */
+        for (i = 0; i < NR_REGEX; i++) {
+            if (regexec(&re[i], e + position, 1, &pmatch, 0) == 0 && pmatch.rm_so == 0) {
+                char* substr_start = e + position;
+                int substr_len = pmatch.rm_eo;
+
+                Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
+                    i, rules[i].regex, position, substr_len, substr_len, substr_start);
+
+                position += substr_len;
+                
+                /* TODO: Now a new token is recognized with rules[i]. Add codes
+                 * to record the token in the array `tokens'. For certain types
+                 * of tokens, some extra actions should be performed.
+                 */
+
+                Assert(nr_token < 32, "too many tokens,token should less than 32 characters");
+
+                switch (rules[i].token_type) {
+                case TK_NOTYPE:
+                    break;
+                case TK_HEX:
+                case TK_UINT:
+                    Assert(substr_len < 32, "hex/uint token too long");
+                    strncpy(tokens[nr_token].str, substr_start, substr_len);
+                    tokens[nr_token].str[substr_len] = '\0';
+                    tokens[nr_token].type = rules[i].token_type; // 设置类型
+                    nr_token++;
+                    break;
+                case TK_INT:
+                    Assert(substr_len < 32, "int token too long");
+                    strncpy(tokens[nr_token].str, substr_start, substr_len);
+                    tokens[nr_token].str[substr_len] = '\0';
+                    tokens[nr_token].type = rules[i].token_type; // 设置类型
+                    nr_token++;
+                    break;
+                case '+':
+                case '-':
+                case '*':
+                case '/':
+                case '(':
+                case ')':
+                    strncpy(tokens[nr_token].str, substr_start, substr_len);
+                    tokens[nr_token].str[substr_len] = '\0';
+                    tokens[nr_token].type = rules[i].token_type; // 设置类型
+                    nr_token++;
+                    break;
+                default:
+                    Assert(false, "unknow token type %d", rules[i].token_type);
+                }
+                break;
+            }
+        }
+
+        if (i == NR_REGEX) {
+            printf("no match at position %d\n%s\n%*.s^\n", position, e, position, "");
+            return false;
+        }
+    }
+
+    return true;
+}
+```
+
+#### 根据token求表达式的值
+主要思路:递归
+```bnf
+<expr> ::= <number>    # 一个数是表达式
+  | "(" <expr> ")"     # 在表达式两边加个括号也是表达式
+  | <expr> "+" <expr>  # 两个表达式相加也是表达式
+  | <expr> "-" <expr>  # 接下来你全懂了
+  | <expr> "*" <expr>
+  | <expr> "/" <expr>
+```
+根据分治法,将大的表达式化为小的表达式进行求值
+代码框架:
+```C
+eval(p, q) {
+  if (p > q) {
+    /* Bad expression */
+  }
+  else if (p == q) {
+    /* Single token.
+     * For now this token should be a number.
+     * Return the value of the number.
+     */
+  }
+  else if (check_parentheses(p, q) == true) {
+    /* The expression is surrounded by a matched pair of parentheses.
+     * If that is the case, just throw away the parentheses.
+     */
+    return eval(p + 1, q - 1);
+  }
+  else {
+    /* We should do more things here. */
+  }
+}
+```
+在一个token表达式中寻找主运算符:
+
+- 非运算符的token不是主运算符.
+- 出现在一对括号中的token不是主运算符. 注意到这里不会出现有括号包围整个表达式的情况, 因为这种情况已经在check_parentheses()相应的if块中被处理了.
+- 主运算符的优先级在表达式中是最低的. 这是因为主运算符是最后一步才进行的运算符.
+- 当有多个运算符的优先级都是最低时, 根据结合性, 最后被结合的运算符才是主运算符. 一个例子是1 + 2 + 3, 它的主运算符应该是右边的+.
+要找出主运算符, 只需要将token表达式全部扫描一遍, 就可以按照上述方法唯一确定主运算符.
+代码框架更新
+```C
+eval(p, q) {
+  if (p > q) {
+    /* Bad expression */
+  }
+  else if (p == q) {
+    /* Single token.
+     * For now this token should be a number.
+     * Return the value of the number.
+     */
+  }
+  else if (check_parentheses(p, q) == true) {
+    /* The expression is surrounded by a matched pair of parentheses.
+     * If that is the case, just throw away the parentheses.
+     */
+    return eval(p + 1, q - 1);
+  }
+  else {
+    op = the position of 主运算符 in the token expression;
+    val1 = eval(p, op - 1);
+    val2 = eval(op + 1, q);
+
+    switch (op_type) {
+      case '+': return val1 + val2;
+      case '-': /* ... */
+      case '*': /* ... */
+      case '/': /* ... */
+      default: assert(0);
+    }
+  }
+}
+```
+代码实现
+```C
+bool check_parentheses(int p, int q)
+{
+    if (tokens[p].type != '(' || tokens[q].type != ')') {
+        return false;
+    }
+    int n_left = 0;
+    for (int i = p + 1; i <= q - 1; i++) {
+        if (tokens[i].type == '(') {
+            n_left++;
+        } else if (tokens[i].type == ')') {
+            n_left--;
+            if (n_left < 0) {
+                return false;
+            }
+        }
+    }
+    return n_left == 0;
+}
+
+int find_main_op(int p, int q)
+{
+    int main_op = -1;
+    int main_op_priority = 3;
+
+    for (int i = p; i <= q; i++) {
+
+        int priority = 0;
+        switch (tokens[i].type) {
+        case '+':
+        case '-':
+            priority = 1;
+            break;
+        case '*':
+        case '/':
+            priority = 2;
+            break;
+        case '(':
+            while (tokens[i].type != ')') {
+                i++;
+            }
+            continue;
+        default:
+            continue;
+        }
+        if (priority <= main_op_priority) {
+            main_op_priority = priority;
+            main_op = i;
+        }
+    }
+    return main_op;
+}
+
+word_t eval_expr(int p, int q, bool* success)
+{
+    if (p > q) {
+        *success = false;
+        return 0;
+    } else if (p == q) {
+        *success = true;
+        word_t result = 0;
+        switch (tokens[p].type) {
+        case TK_HEX:
+            sscanf(tokens[p].str, "%x", &result);
+            return result;
+        case TK_UINT:
+            sscanf(tokens[p].str, "%d", &result);
+            return result;
+        case TK_INT:
+            sscanf(tokens[p].str, "%d", &result);
+            return result;
+        default:
+            Assert(false, "error token type %d", tokens[p].type);
+        }
+    } else if (check_parentheses(p, q) == true) {
+        return eval_expr(p + 1, q - 1, success);
+    } else {
+        *success = true;
+        int op = find_main_op(p, q);
+        int val1 = eval_expr(p, op - 1, success);
+        int val2 = eval_expr(op + 1, q, success);
+        switch (tokens[op].type) {
+        case '+':
+            return val1 + val2;
+        case '-':
+            return val1 - val2;
+        case '*':
+            return val1 * val2;
+        case '/':
+            return val1 / val2;
+        default:
+            assert(0);
+        }
+    }
+    return 0;
+}
+```
