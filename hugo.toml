@@ -102,3 +102,6 @@ copyright = "Haoyuehx ©"
   [markup.highlight]
     # Choose from https://xyproto.github.io/splash/docs/all.html
     style = 'monokailight'
+  [markup.tableOfContents]
+    startLevel = 1
+    endLevel = 4

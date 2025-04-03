@@ -54,14 +54,12 @@
             </div>
         </div>
     </div>
-    <div class="row justify-content-center mb-5">
+    <div class="main-container">
         <!-- 主要内容 -->
         <div class="main-content">
-            <div class="serif main-content">
-                {{ .Content | safeHTML }}
-            </div>
+            {{ .Content | safeHTML }}
         </div>
-    
+
         <!-- 目录导航 -->
         <aside class="sidebar">
             <h5>目录导航</h5>

@@ -277,10 +277,16 @@ code {
   color: var(--dark);
 }
 
+.main-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
 /********************* Content *********************/
 
 .main-content {
-    flex-grow: 1;
+    width: 78%;
     line-height: 40px;
     font-size: 22px;
 }
@@ -312,29 +318,43 @@ a:hover {
 
 /********************* Sidebar *********************/
 
-.flex {
-    display: flex;
-    flex-direction: row;
-    gap: 6px;
-    /* gap 需要单位 */
-    align-items: flex-start;
-    justify-content: flex-start;
-    width: 100%;
-    /* 让 .flex 充满父容器 */
-}
-
 .sidebar {
+    width: 20%;
     position: sticky;
     top: 0;
-    flex-basis: 25%;
-    /* 让 sidebar 具有 25% 宽度 */
-    max-width: 25%;
-    /* 避免超过 25% */
     overflow-y: auto;
     background-color: var(--white);
-    padding: 20px;
     align-self: flex-start;
 }
+
+.sidebar ul {
+    list-style: none;
+    /* 去掉前面的点 */
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar li {
+    padding: 0;
+    margin: 0;
+}
+
+/* 不同层级的标题增加 2ch 缩进 */
+.sidebar ul ul {
+    padding-left: 0ch;
+}
+
+/* 二级 */
+.sidebar ul ul ul {
+    padding-left: 1ch;
+}
+
+/* 三级 */
+.sidebar ul ul ul ul {
+    padding-left: 1ch;
+}
+
+/* 四级 */
 
 /********************* Footer *********************/
 
