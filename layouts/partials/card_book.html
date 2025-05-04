@@ -6,10 +6,9 @@
 <div class='col col-sm-6 col-md-6 col-lg-3 col-xl-2 mb-3 {{ $.Scratch.Get "library_tags_list" }}'>
     <div class="card">
         <a href="{{ .Permalink }}" class="stretched-link"></a>
-        {{ $img := (.Resources.ByType "image").GetMatch "*featured*" }}
-        {{ $img = $img.Fit "2000x2000" }}
-        {{ with $img }}
-            <img src="{{ .Permalink }}" alt="{{ $.Title }}" class="card-img">
+        {{ with (.Resources.ByType "image").GetMatch "*featured*" }}
+            {{$resized := .Fit "2000x2000" }}
+            <img src="{{ $resized.Permalink }}" alt="{{ $.Title }}" class="card-img">
         {{ end }}
     </div>
 </div>
@@ -19,10 +18,9 @@
         <a href="{{ .Permalink }}" class="stretched-link"></a>
         <div class="row g-0">
             <div class="col-md-12 col-lg-4 col-xl-5">
-                {{ $img := (.Resources.ByType "image").GetMatch "*featured*" }}
-                {{ $img = $img.Fit "2000x2000" }}
-                {{ with $img }}
-                    <img src="{{ .Permalink }}" class="img-fluid rounded-start card-img-top" alt="...">
+                {{ with (.Resources.ByType "image").GetMatch "*featured.*" }}
+                    {{ $resized := .Fit "2000x2000" }}
+                    <img src="{{ $resized.Permalink }}" class="img-fluid rounded-start card-img-top" alt="...">
                 {{ end }}
             </div>
             <div class="col-lg-8 col-xl-7 ms-auto">
