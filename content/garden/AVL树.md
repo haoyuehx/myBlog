@@ -24,7 +24,7 @@ typedef struct AVLNode {
 
 ### RR型不平衡
 右孩子的右子树插入节点导致失衡，用左单旋转法调整。
-![RR型不平衡](./RR.png)
+![RR型不平衡](/images/RR.png)
 
 ```C
 Nodeptr RR_single_rotation(Nodeptr root) {
@@ -40,7 +40,7 @@ Nodeptr RR_single_rotation(Nodeptr root) {
 
 ### LL型不平衡
 左孩子的左树插入节点导致失衡，用右单旋转法调整
-![LL型不平衡](./LL.png)
+![LL型不平衡](/images/LL.png)
 ```C
 Nodeptr LL_single_rotation(Nodeptr root) {
     Nodeptr new_root = root->left;
@@ -55,9 +55,9 @@ Nodeptr LL_single_rotation(Nodeptr root) {
 
 ### LR型不平衡
 左孩子的右子树插入节点导致失衡，先左后右双向旋转调整
-![LR型不平衡](./LR1.png)
-![LR型不平衡](./LR2.png)
-![LR型不平衡](./LR3.png)
+![LR型不平衡](/images/LR1.png)
+![LR型不平衡](/images/LR2.png)
+![LR型不平衡](/images/LR3.png)
 
 ```C
 Nodeptr LR_double_rotation(Nodeptr root) {
@@ -68,9 +68,9 @@ Nodeptr LR_double_rotation(Nodeptr root) {
 
 ### RL型不平衡
 右孩子的左子树插入节点导致失衡，先右后左双向旋转调整
-![RL型不平衡](./RL1.png)
-![RL型不平衡](./RL2.png)
-![RL型不平衡](./RL3.png)
+![RL型不平衡](/images/RL1.png)
+![RL型不平衡](/images/RL2.png)
+![RL型不平衡](/images/RL3.png)
 ```C
 Nodeptr RL_double_rotation(Nodeptr root) {
     root->right = LL_single_rotation(root->right);
@@ -78,7 +78,7 @@ Nodeptr RL_double_rotation(Nodeptr root) {
 }
 ```
 
-### 插入节点
+## 插入节点
 ```C
 Nodeptr insertAVL(Nodeptr root, int x) {
     if (root == NULL) {
@@ -116,7 +116,7 @@ Nodeptr insertAVL(Nodeptr root, int x) {
 }
 ```
 
-### 删除节点
+## 删除节点
 ```C
 Nodeptr deleteAVL(Nodeptr root, int x) {
     if (!root) return NULL;
