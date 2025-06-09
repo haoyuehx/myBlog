@@ -3,7 +3,7 @@ title: "C++ STL list"
 date: 2025-02-12
 lastmod: 2025-02-12
 draft: false
-garden_tags: ["algorithm", "链表", "STL"]
+garden_tags: ["algorithm", "链表", "stl"]
 summary: " "
 status: "evergreen"
 ---

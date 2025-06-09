@@ -3,7 +3,7 @@ title: "nju pa1.1"
 date: 2025-02-21
 lastmod: 2025-03-06
 draft: false
-garden_tags: ["CSAPP", "lldb", "debug"]
+garden_tags: ["csapp", "lldb", "debug"]
 summary: " "
 status: "growing"
 ---
