@@ -1,9 +1,9 @@
 ---
-title: "服务器管理"
+title: "ssh连接"
 date: 2025-06-18
 lastmod: 2025-06-18
 draft: false
-garden_tags: ["服务器"]
+garden_tags: ["web服务器"]
 summary: " "
 status: "evergreen"
 --- 
