@@ -81,16 +81,21 @@ $ bear -- make
 参考user/中的其他一些程序(例如 user/echo.c 、 user/grep.c 和 user/rm.c)了解命令行参数如何传递给程序。
 
 命令行参数从```main(int argc, char *argv[]) ```传入
+
 argc：Argument Count，参数个数（包含程序名本身）。
+
 argv：Argument Vector，参数字符串数组，每个元素是一个 char*
 
 **注意**：如果用户忘记传递参数，sleep 应该打印一条错误消息。
+
 命令行参数以字符串形式传递；可以使用atoi将其转换为整数(在user/ulib.c实现)。
+
 使用系统调用 sleep，查看xv6文档，找到sleep以及需要使用的write：
-```
+
 int sleep(int n)                        Pause for n clock ticks.
+
 int write(int fd, char *buf, int n)     Write n bytes from buf to file descriptor fd; returns n.
-```
+
 根据以上内容就可以完成代码
 ```C
 //sleep.c
