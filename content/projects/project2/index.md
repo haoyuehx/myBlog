@@ -5,7 +5,7 @@ draft: false
 project_tags: ["docs", "how-to"]
 status: "seeding"
 summary: "Details on how to create and update content on your site"
-weight: 1
+weight: 5
 ---
 
 It is super easy to create and update the content of this theme. There are only 2 places that matters depending on waht you need to update:
