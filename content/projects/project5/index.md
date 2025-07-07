@@ -92,9 +92,10 @@ argv：Argument Vector，参数字符串数组，每个元素是一个 char*
 
 使用系统调用 sleep，查看xv6文档，找到sleep以及需要使用的write：
 
-int sleep(int n)                        Pause for n clock ticks.
-
-int write(int fd, char *buf, int n)     Write n bytes from buf to file descriptor fd; returns n.
+|System call|Description|
+|----------------------------------|----------------------------------|
+|int sleep(int n)|Pause for n clock ticks.|
+|int write(int fd, char *buf, int n)|Write n bytes from buf to file descriptor fd; returns n.|
 
 根据以上内容就可以完成代码
 ```C
