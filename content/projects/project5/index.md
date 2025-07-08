@@ -218,22 +218,90 @@ int main(int argc, char* argv[])
 Makefile添加:
 ```shell
 180 UPROGS=\
-181     $U/_cat\
-182     $U/_echo\
-183     $U/_forktest\
-184     $U/_grep\
-185     $U/_init\
-186     $U/_kill\
-187     $U/_ln\
-188     $U/_ls\
-189     $U/_mkdir\
+...
 190     $U/_pingpong\
-191     $U/_rm\ 
-192     $U/_sh\
-193     $U/_sleep\
-194     $U/_stressfs\
-195     $U/_usertests\
-196     $U/_grind\ 
-197     $U/_wc\
-198     $U/_zombie\
+```
+
+编译测试
+```shell
+$ ./grade-lab-util pingpong
+make: 'kernel/kernel' is up to date.
+== Test pingpong == pingpong: OK (2.7s)
+```
+
+### primes
+用```pipe```和```fork```实现一个素数筛
+![sieve](./sieve.gif)
+核心思想是：每个进程负责一个素数，只传递不能被该素数整除的数字给下一个进程。
+
+prime函数打印当前素数，fork新的进程，子进程递归调用，父进程将不能被当前数整除的用```pipe```给子进程
+
+```C
+#include "kernel/types.h"
+#include "kernel/stat.h"
+#include "user/user.h"
+
+void primes(int) __attribute__((noreturn));
+
+void primes(int fd)
+{
+    int p, n;   //必须局部变量（非static），保证每个递归层有自己独立的管道fd数组。
+    int p_to_c[2];      //static 变量导致管道fd共享，关闭异常，造成进程阻塞和未退出。改为局部变量即可正常退出。
+    pipe(p_to_c);
+
+    if (read(fd, &p, 4) == 0) {
+        close(fd);
+        exit(0);
+    }
+
+    fprintf(1, "prime %d\n", p);
+
+    if (fork() == 0) {
+        close(p_to_c[1]);
+        close(fd);
+        primes(p_to_c[0]);
+    } else {
+        close(p_to_c[0]);
+        while (read(fd, &n, 4) != 0) {
+            if (n % p != 0) {
+                write(p_to_c[1], &n, 4);
+            }
+        }
+        close(p_to_c[1]);
+        close(fd);
+        wait(0);
+    }
+    exit(0);
+}
+
+int main(int argc, char* argv[])
+{
+    int p_to_c[2];
+    pipe(p_to_c);
+    if (fork() == 0) {
+        close(p_to_c[1]);
+        primes(p_to_c[0]);
+    } else {
+        close(p_to_c[0]);
+        for (int i = 2; i <= 280; i++) {
+            write(p_to_c[1], &i, 4);
+        }
+        close(p_to_c[1]);
+        wait(0);
+    }
+    exit(0);
+}
+```
+
+```shell
+180 UPROGS=\
+...
+191     $U/_primes\
+```
+
+编译测试
+```shell
+$ ./grade-lab-util primes
+make: 'kernel/kernel' is up to date.
+== Test primes == primes: OK (1.5s)
 ```
