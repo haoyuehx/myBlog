@@ -5,7 +5,7 @@ draft: false
 project_tags: ["Operating System"]
 status: "growing"
 summary: " "
-weight: 1
+weight: 5
 ---
 
 ## Lab1: Xv6 and Unix utilities
@@ -113,9 +113,7 @@ int main(int argc, char* argv[])
 
     for (char* p = argv[1]; *p; p++) {
         if (*p < '0' || *p > '9') {
-            write(1, "sleep: invalid time interval '", 30);
-            write(1, argv[1], strlen(argv[1]));
-            write(1, "'\n", 2);
+            fprintf(2, "sleep: invalid time interval '%s'\n",argv[1]);
             exit(1);
         }
     }
@@ -152,4 +150,90 @@ make: 'kernel/kernel' is up to date.
 == Test sleep, no arguments == sleep, no arguments: OK (1.1s) 
 == Test sleep, returns == sleep, returns: OK (0.7s) 
 == Test sleep, makes syscall == sleep, makes syscall: OK (1.0s)
+```
+
+### pingpong
+主要使用的系统调用
+| System call                         | Description                                              |
+| ----------------------------------- | -------------------------------------------------------- |
+| int fork()                    | Create a process, return child’s PID.                                 |
+| int wait(int *status) | Wait for a child to exit; exit status in *status; returns child PID. |
+|int getpid()|Return the current process’s PID.|
+|int write(int fd, char *buf, int n)|Write n bytes from buf to file descriptor fd; returns n.|
+|int read(int fd, char *buf, int n)|Read n bytes into buf; returns number read; or 0 if end of file.|
+|int close(int fd)|Release open file fd.|
+|int pipe(int p[])|Create a pipe, put read/write file descriptors in p[0] and p[1].|
+
+```C
+// pingpong.c
+#include "kernel/types.h"
+#include "kernel/stat.h"
+#include "user/user.h"
+
+int main(int argc, char* argv[])
+{
+    
+    int p_to_c[2];
+    int c_to_p[2];
+
+    pipe(p_to_c);
+    pipe(c_to_p);
+
+    char buf[1];
+    
+    if (fork() == 0) {
+        // Child process code
+        close(p_to_c[1]);
+        close(c_to_p[0]);
+        
+        read(p_to_c[0], buf, sizeof(buf));
+
+        fprintf(1, "%d: received ping\n", getpid());
+        write(c_to_p[1], buf, sizeof(buf));
+
+        close(p_to_c[0]);
+        close(c_to_p[1]);
+        exit(0);
+    }
+    else {
+        // Parent process code
+        close(p_to_c[0]);
+        close(c_to_p[1]);
+
+        write(p_to_c[1], "a", sizeof(buf));
+
+        read(c_to_p[0], buf, sizeof(buf));
+        fprintf(1, "%d: received pong\n", getpid());
+        
+        close(p_to_c[1]);
+        close(c_to_p[0]);
+
+        wait(0);//等待子进程结束
+        exit(0);
+    }
+
+}
+```
+
+Makefile添加:
+```shell
+180 UPROGS=\
+181     $U/_cat\
+182     $U/_echo\
+183     $U/_forktest\
+184     $U/_grep\
+185     $U/_init\
+186     $U/_kill\
+187     $U/_ln\
+188     $U/_ls\
+189     $U/_mkdir\
+190     $U/_pingpong\
+191     $U/_rm\ 
+192     $U/_sh\
+193     $U/_sleep\
+194     $U/_stressfs\
+195     $U/_usertests\
+196     $U/_grind\ 
+197     $U/_wc\
+198     $U/_zombie\
 ```

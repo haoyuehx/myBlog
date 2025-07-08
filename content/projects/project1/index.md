@@ -4,7 +4,7 @@ date: 2021-08-01
 draft: false
 project_tags: ["markdown"]
 status: "evergreen"
-weight: 2
+weight: 1
 summary: "Example of markdown syntax you can use to edit your content"
 links:
     external_link:
