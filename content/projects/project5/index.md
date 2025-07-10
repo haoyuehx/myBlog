@@ -232,9 +232,17 @@ make: 'kernel/kernel' is up to date.
 ### primes
 用```pipe```和```fork```实现一个素数筛
 ![sieve](./sieve.gif)
+
 核心思想是：每个进程负责一个素数，只传递不能被该素数整除的数字给下一个进程。
 
 prime函数打印当前素数，fork新的进程，子进程递归调用，父进程将不能被当前数整除的用```pipe```给子进程
+
+| System call                         | Description                                              |
+| ----------------------------------- | -------------------------------------------------------- |
+| int pipe(int p[])                    | Create a pipe, put read/write file descriptors in p[0] and p[1].|
+| int read(int fd, char *buf, int n) | Read n bytes into buf; returns number read; or 0 if end of file. |
+|int close(int fd)|Release open file fd.|
+|int fork()|Create a process, return child’s PID.|
 
 ```C
 #include "kernel/types.h"
@@ -305,3 +313,95 @@ $ ./grade-lab-util primes
 make: 'kernel/kernel' is up to date.
 == Test primes == primes: OK (1.5s)
 ```
+
+### find
+查找目录树中所有指定名称的文件
+主要借鉴代码```user/ls.c```
+
+| System call                         | Description                                              |
+| ----------------------------------- | -------------------------------------------------------- |
+|int open(char *file, int flags)|Open a file; flags indicate read/write; returns an fd (file descriptor).|
+|int fstat(int fd, struct stat *st)|Place info about an open file into *st.|
+|int read(int fd, char *buf, int n)|Read n bytes into buf; returns number read; or 0 if end of file.|
+
+```C
+// find.c
+#include "kernel/types.h"
+#include "kernel/stat.h"
+#include "user/user.h"
+#include "kernel/fs.h"      //目录项(directory entry)结构体
+#include "kernel/fcntl.h"   //使用open()是权限限制
+
+void find(char* path, char* target)
+{
+    char buf[512], *p;  //buf存储目录path,*p操作字符串
+    int fd;             //存储文件描述符
+    struct dirent de;   //目录项
+    struct stat st;     //文件状态
+
+    if ((fd = open(path, O_RDONLY)) < 0) {      //只读打开path，通过path映射一个fd
+        fprintf(2, "find: cannot open %s\n", path);
+        return;
+    }
+
+    if (fstat(fd, &st) < 0) {   //st写入path文件状态
+        fprintf(2, "find: cannot stat %s\n", path);
+        close(fd);
+        return;
+    }
+
+    while (read(fd, &de, sizeof(de)) == sizeof(de)) {   //通过fd逐项读取目录内部的目录项
+        if (strlen(path) + 1 + DIRSIZ + 1 > sizeof buf) {
+            // 在构建新的完整路径之前，检查 buf 缓冲区是否足够大。
+            // strlen(path): 当前路径的长度。
+            // + 1: 为路径分隔符 / 留出空间。
+            // + DIRSIZ : 为目录项名称 de.name 留出最大空间。
+            // + 1 : 为字符串结束符 \0 留出空间。
+            printf("find: path too long\n");
+            break;
+        }
+
+        if (de.inum == 0)
+            continue;
+
+        strcpy(buf, path);
+        p = buf + strlen(buf);
+        *p++ = '/';
+        memmove(p, de.name, DIRSIZ);
+
+        // 将当前目录项的名称de.name复制到buf中，紧跟在/之后。
+        // 使用memmove而不是strcpy是因为de.name可能不是以\0结尾的(它是一个固定大小的数组 char name[DIRSIZ])。
+        p[DIRSIZ] = 0;
+
+        if (stat(buf, &st) < 0) {
+            printf("find: cannot stat %s\n", buf);
+            continue;
+        }
+
+        if (strcmp(de.name, ".") == 0 || strcmp(de.name, "..") == 0)
+            continue;
+        // 不递归自身和上一级目录
+
+        if (st.type == T_DIR) {
+            //下一级是文件夹就递归
+            find(buf, target);
+        }
+        else if (strcmp(de.name, target) == 0) {
+            fprintf(1, "%s\n",buf);
+        }
+    }
+}
+
+int main(int argc, char* argv[])
+{
+    if (argc != 3) {
+        fprintf(2, "Usage: find <path> <filename>\n");
+        exit(1);
+    }
+
+    find(argv[1], argv[2]);
+    exit(0);
+}
+```
+
+### xargs
