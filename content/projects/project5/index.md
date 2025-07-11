@@ -31,7 +31,6 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 将项目下载下来
 ```shell
 git clone git://g.csail.mit.edu/xv6-labs-2024
-git clone --depth=1 git://g.csail.mit.edu/xv6-labs-2024 #外网速度比较慢，开启 Git 的断点续传
 ```
 
 ```shell
