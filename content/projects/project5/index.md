@@ -193,7 +193,6 @@ int main(int argc, char* argv[])
 
         close(p_to_c[0]);
         close(c_to_p[1]);
-        exit(0);
     }
     else {
         // Parent process code
@@ -209,9 +208,8 @@ int main(int argc, char* argv[])
         close(c_to_p[0]);
 
         wait(0);//等待子进程结束
-        exit(0);
     }
-
+    exit(0);
 }
 ```
 
@@ -405,3 +403,102 @@ int main(int argc, char* argv[])
 ```
 
 ### xargs
+xargs工作方式:
+1. 读取标准输入
+2. 把从标准输入读到的内容，作为额外的参数添加到xargs后面指定的命令的末尾。
+3. 然后，它会执行这个由原始命令和新增参数组成的完整命令。
+
+```C
+#include "kernel/types.h"
+#include "kernel/stat.h"
+#include "user/user.h"
+
+#define MAX_BUF 512 
+
+int main(int argc, char* argv[])
+{
+    char* new_argv[3];  //合并后参数
+    char line_buf[MAX_BUF];
+    int current_len = 0;
+
+    for (int i = 1; i < argc ; i++) {
+        new_argv[i - 1] = argv[i];
+    }
+    int initial_arg_count = argc - 1;
+
+    while (read(0, line_buf + current_len, 1) > 0) {
+        if (line_buf[current_len] == '\n') {    //遇到换行符直接执行
+            line_buf[current_len] = '\0';
+            new_argv[initial_arg_count] = line_buf;
+            new_argv[initial_arg_count + 1] = 0; 
+
+            if (fork() == 0) {
+                exec(new_argv[0], new_argv);    //执行原始命令
+                fprintf(2, "xargs: exec failed\n");
+                exit(1);
+            } else { 
+                wait(0);
+                current_len = 0;
+            }
+        } else if (current_len < MAX_BUF - 1) {
+            current_len++;
+        } else {
+            fprintf(2, "xargs: line too long, truncated\n");
+        }
+    }
+
+    if (current_len > 0) {
+        line_buf[current_len] = '\0';
+        new_argv[initial_arg_count] = line_buf;
+        new_argv[initial_arg_count + 1] = 0;
+
+        if (fork() == 0) {
+            exec(new_argv[0], new_argv);
+            fprintf(2, "xargs: exec failed\n");
+            exit(1);
+        } else {
+            wait(0);
+        }
+    }
+
+    exit(0);
+}
+```
+
+## lab1 grade
+```shell
+$ make grade
+== Test sleep, no arguments == 
+$ make qemu-gdb
+sleep, no arguments: OK (2.4s) 
+== Test sleep, returns == 
+$ make qemu-gdb
+sleep, returns: OK (0.6s) 
+== Test sleep, makes syscall == 
+$ make qemu-gdb
+sleep, makes syscall: OK (1.0s) 
+== Test pingpong == 
+$ make qemu-gdb
+pingpong: OK (0.9s) 
+== Test primes == 
+$ make qemu-gdb
+primes: OK (1.5s) 
+== Test find, in current directory == 
+$ make qemu-gdb
+find, in current directory: OK (0.8s) 
+== Test find, in sub-directory == 
+$ make qemu-gdb
+find, in sub-directory: OK (1.2s) 
+== Test find, recursive == 
+$ make qemu-gdb
+find, recursive: OK (0.8s) 
+== Test xargs == 
+$ make qemu-gdb
+xargs: OK (1.6s) 
+== Test xargs, multi-line echo == 
+$ make qemu-gdb
+xargs, multi-line echo: OK (0.5s) 
+== Test time == 
+time: OK 
+Score: 110/110
+```
