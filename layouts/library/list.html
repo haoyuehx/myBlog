@@ -30,8 +30,12 @@
 <!-- 番剧卡片网格 -->
 <div class="container">
     <div class="row" data-masonry='{"percentPosition": true }' id="blogposts">
-        {{ $bangumi := getJSON "data/bangumi.json" }}
-        {{ range $bangumi }}
+        {{ $data := resources.GetRemote
+        "https://api.bgm.tv/v0/users/1024520/collections?subject_type=2&type=2&limit=30&offset=0" }}
+        {{ with $data }}
+        {{ $json := . | transform.Unmarshal }}
+        {{ $bangumiList := $json.data | default (slice) }}
+        {{ range $bangumiList }}
         {{ $tags := delimit (apply .tags "printf" "js-iso-%s" ".") " " }}
         <div class="col-sm-6 col-md-4 col-lg-3 mb-4 {{ $tags }}"> <!-- 更窄的列宽 -->
             <div class="card top-highlight h-100" style="max-width: 300px; margin: 0 auto;"> <!-- 固定卡片宽度 -->
@@ -40,31 +44,36 @@
                     <img src="{{ .subject.images.common }}" alt="{{ .subject.name_cn }}" class="img-fluid"
                         style="max-height: 350px; width: auto; max-width: 100%;" loading="lazy">
                 </div>
-        
+
                 <!-- 卡片内容 -->
                 <div class="card-body p-2"> <!-- 减少内边距 -->
                     <h6 class="card-title mb-1" style="font-size: 0.95rem;">{{ .subject.name_cn }}</h6> <!-- 更小字体 -->
                     <p class="card-subtitle text-muted small mb-2" style="font-size: 0.75rem;">{{ .subject.name }}</p>
-        
+
                     <!-- 紧凑的评分显示 -->
                     <div class="d-flex justify-content-between mb-1" style="font-size: 0.7rem;">
                         <span class="badge bg-primary py-1">⭐ {{ .subject.score }}</span>
                         <span class="badge bg-secondary py-1">我的 {{ .rate }}</span>
                     </div>
-        
+
                     <!-- 进度条 -->
                     <div class="progress mb-1" style="height: 4px;">
                         {{ $percentage := div (mul .ep_status 100) .subject.eps }}
-                        <!-- <div class="progress-bar" style="width: {{ $percentage }}%"></div> -->
+                        <div class="progress-bar" style="width: {{ printf " %d%%" $percentage }};"></div>
                     </div>
-        
+
                     <p class="text-end mb-0" style="font-size: 0.65rem;">
                         {{ .ep_status }}/{{ .subject.eps }}集
                     </p>
-        
+
                     <a href="https://bgm.tv/subject/{{ .subject_id }}" class="stretched-link"></a>
                 </div>
             </div>
+        </div>
+        {{ end }}
+        {{ else }}
+        <div class="col-12">
+            <p class="text-muted text-center">暂时无法加载动画数据</p>
         </div>
         {{ end }}
     </div>

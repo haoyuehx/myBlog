@@ -1,8 +1,8 @@
 {{ define "main" }}
 
 <div class="mt-5 pt-5 pb-1">
-    <div class="container" >
-       	<h1 class="name display-1"><b>{{ .Site.Params.Name }}</b></h1>
+    <div class="container">
+        <h1 class="name display-1"><b>{{ .Site.Params.Name }}</b></h1>
     </div>
 </div>
 <div class="mb-5 py-4">
@@ -12,68 +12,72 @@
 </div>
 
 <div class="container py-3">
-	<div class="row justify-content-between my-5">
-		<!-- Garden / Blog -->
-		<div class="col-lg-4">
-			{{ with .Site.GetPage "section" "garden" }}
-          	<div class="pb-4">
-              	<a class="heading fs-2" href="{{ .RelPermalink }}">{{ .Title }}</a>
-          	</div>      
-			{{ if .Summary }} <p class="subheading">{{ .Summary }}</p> {{ end }}
-			{{ end }}
-			<div class="row row-cols-1 g-4 mb-5">
-				{{ range ( where site.RegularPages "Section" "garden" | first 6 ) }}
-				{{ partial "home_garden.html" . }}
-				{{ end }}
-      		</div>
-			{{ with .Site.GetPage "section" "garden" }}
-			<div class="d-flex flex-row-reverse">
-        		<a href="{{ .RelPermalink }}" role="button" class="btn btn-sm see-all">See all articles</a>
-      		</div>
-      		{{ end }}
-		</div>
-    	
-		<!-- Projects -->
-		<div class="col-lg-7">
-			{{ with .Site.GetPage "section" "projects" }}
-			<div class="pb-4">
-				<a class="heading fs-2" href="{{ .RelPermalink }}">{{ .Title }}</a>
-			</div>          
-			{{ if .Summary }} 
-			<p class="subheading">{{ .Summary }}</p> 
-			{{ end }}
-			{{ end }}
-			<div class="row row-cols-1 row-cols-md-2 g-4 mb-5" data-masonry='{"percentPosition": true }'>
-				{{ range ( where site.RegularPages "Section" "projects" | first 6 ) }}
-				{{ partial "home_project.html" . }}
-				{{end}}
-    		</div>
-			{{ with .Site.GetPage "section" "projects" }}
-			<div class="d-flex flex-row-reverse">
-				<a href="{{ .RelPermalink }}" role="button" class="btn btn-sm see-all">See all projects</a>
-			</div>    
-			{{ end }}
-  		</div>
-	</div>
+    <div class="row justify-content-between my-5">
+        <!-- Garden / Blog -->
+        <div class="col-lg-4">
+            {{ with .Site.GetPage "section" "garden" }}
+            <div class="pb-4">
+                <a class="heading fs-2" href="{{ .RelPermalink }}">{{ .Title }}</a>
+            </div>
+            {{ if .Summary }} <p class="subheading">{{ .Summary }}</p> {{ end }}
+            {{ end }}
+            <div class="row row-cols-1 g-4 mb-5">
+                {{ range ( where site.RegularPages "Section" "garden" | first 6 ) }}
+                {{ partial "home_garden.html" . }}
+                {{ end }}
+            </div>
+            {{ with .Site.GetPage "section" "garden" }}
+            <div class="d-flex flex-row-reverse">
+                <a href="{{ .RelPermalink }}" role="button" class="btn btn-sm see-all">See all articles</a>
+            </div>
+            {{ end }}
+        </div>
 
-	<!-- Library -->
-	<div class="container py-3">
-		<div class="row justify-content-between my-5">
-			<div class="col-sm-4 col-lg-3">
-				{{ with .Site.GetPage "section" "library" }}
-				<div class="pb-4">
-					<a class="heading fs-2" href="{{ .RelPermalink }}">{{ .Title }}</a>
-				</div>
-				{{ if .Summary }} <p class="subheading">{{ .Summary }}</p> {{ end }}
-				<div class="d-flex">
-					<a href="{{ .RelPermalink }}" role="button" class="btn btn-sm see-all">See all animations</a>
-				</div>
-				{{ end }}
-			</div>
+        <!-- Projects -->
+        <div class="col-lg-7">
+            {{ with .Site.GetPage "section" "projects" }}
+            <div class="pb-4">
+                <a class="heading fs-2" href="{{ .RelPermalink }}">{{ .Title }}</a>
+            </div>
+            {{ if .Summary }}
+            <p class="subheading">{{ .Summary }}</p>
+            {{ end }}
+            {{ end }}
+            <div class="row row-cols-1 row-cols-md-2 g-4 mb-5" data-masonry='{"percentPosition": true }'>
+                {{ range ( where site.RegularPages "Section" "projects" | first 6 ) }}
+                {{ partial "home_project.html" . }}
+                {{end}}
+            </div>
+            {{ with .Site.GetPage "section" "projects" }}
+            <div class="d-flex flex-row-reverse">
+                <a href="{{ .RelPermalink }}" role="button" class="btn btn-sm see-all">See all projects</a>
+            </div>
+            {{ end }}
+        </div>
+    </div>
+
+    <!-- Library -->
+    <div class="container py-3">
+        <div class="row justify-content-between my-5">
+            <div class="col-sm-4 col-lg-3">
+                {{ with .Site.GetPage "section" "library" }}
+                <div class="pb-4">
+                    <a class="heading fs-2" href="{{ .RelPermalink }}">{{ .Title }}</a>
+                </div>
+                {{ if .Summary }} <p class="subheading">{{ .Summary }}</p> {{ end }}
+                <div class="d-flex">
+                    <a href="{{ .RelPermalink }}" role="button" class="btn btn-sm see-all">See all animations</a>
+                </div>
+                {{ end }}
+            </div>
             <div class="col me-auto">
-                <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3"> <!-- 改为4列布局，减少间距 -->
-                    {{ $bangumi := getJSON "data/bangumi.json" }}
-                    {{ range first 4 $bangumi }} <!-- 显示4个 -->
+                <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
+                    {{ $data := resources.GetRemote
+                    "https://api.bgm.tv/v0/users/1024520/collections?subject_type=2&type=2&limit=30&offset=0" }}
+                    {{ with $data }}
+                    {{ $json := $data | transform.Unmarshal }}
+                    {{ $bangumiList := $json.data }}
+                    {{ range first 4 $bangumiList }}
                     <div class="col">
                         <div class="card top-highlight h-100" style="max-width: 240px; margin: 0 auto;">
                             <!-- 图片区域 -->
@@ -81,7 +85,7 @@
                                 <img src="{{ .subject.images.common }}" alt="{{ .subject.name_cn }}" class="img-fluid"
                                     style="max-height: 500px; width: auto; max-width: 100%;" loading="lazy">
                             </div>
-            
+                
                             <!-- 卡片内容 -->
                             <div class="card-body p-2">
                                 <h6 class="card-title mb-1" style="font-size: 0.9rem;">{{ .subject.name_cn }}</h6>
@@ -93,6 +97,11 @@
                             </div>
                         </div>
                     </div>
+                    {{ else }}
+                    <div class="col-12">
+                        <p class="text-muted">暂时无法加载动画数据</p>
+                    </div>
+                    {{ end }}
                     {{ end }}
                 </div>
             </div>
