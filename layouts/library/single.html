@@ -1,38 +1,48 @@
 {{ define "main" }}
 
-<!-- Title and summary -->
-
 <div class="container mt-5" style="max-width: 1000px;">
-        <div class="row justify-content-center g-4">
-            <div class="col-xs-12 col-sm-4">
-                {{ $img := (.Resources.ByType "image").GetMatch "*featured*" }}
-                {{ $img = $img.Fit "2000x2000" }}
-                {{ with $img }}
-                <div class="text-center">
-                    <img src="{{ .Permalink }}" class="rounded card-img-top" style="max-width: 250px;">
-                </div>
-                {{ end }}
-            </div>
-            <div class="col-sm-7">
-                    {{ if .Summary | safeHTML }} 
-                    <h4 class="card-title display-2">{{ .Title }}</h4>
-                    <p class="serif fs-2 pb-3">{{ .Summary }}</p>
-                    {{ else }}
-                    <h4 class="card-title display-2 pb-3">{{ .Title }}</h4>
-                    {{ end }}
-                    <p>
-                        <figcaption class="blockquote-footer fs-5">
-                          {{ .Params.Author}}
-                        </figcaption>
-                      </p>
+    <div class="row justify-content-center g-4">
+        <div class="col-xs-12 col-sm-4">
+            {{ $image := .Params.images.common }}
+            <div class="text-center">
+                <img src="{{ $image }}" class="rounded card-img-top" style="max-width: 250px;">
             </div>
         </div>
-
-    <div class="container py-2">
-        <div class="serif main-content p-5">
-            {{ .Content | markdownify | safeHTML }}
+        <div class="col-sm-7">
+            <h4 class="card-title display-2">{{ .Title }}</h4>
+            <p class="serif fs-2 pb-3">{{ .Params.name_cn }}</p>
+            <p>
+            <figcaption class="blockquote-footer fs-5">
+                {{ .Params.author }}
+            </figcaption>
+            </p>
+            <div class="d-flex gap-3 mb-3">
+                <span class="badge bg-primary">评分: {{ .Params.score }}</span>
+                <span class="badge bg-secondary">我的评分: {{ .Params.rate }}</span>
+                <span class="badge bg-info">进度: {{ .Params.ep_status }}/{{ .Params.eps }}</span>
+            </div>
         </div>
     </div>
 
+    <div class="container py-2">
+        <div class="serif main-content p-5">
+            {{ .Content }}
+
+            <h4>标签</h4>
+            <div class="tag-cloud">
+                {{ range .Params.tags }}
+                <span class="badge bg-light text-dark">{{ . }}</span>
+                {{ end }}
+            </div>
+
+            <div class="mt-4">
+                <a href="https://bgm.tv/subject/{{ .Params.subject_id }}" class="btn btn-outline-primary"
+                    target="_blank">
+                    在Bangumi查看详情
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
+
 {{ end }}

@@ -66,33 +66,37 @@
 				</div>
 				{{ if .Summary }} <p class="subheading">{{ .Summary }}</p> {{ end }}
 				<div class="d-flex">
-					<a href="{{ .RelPermalink }}" role="button" class="btn btn-sm see-all">See all books</a>
+					<a href="{{ .RelPermalink }}" role="button" class="btn btn-sm see-all">See all animations</a>
 				</div>
 				{{ end }}
 			</div>
-			<div class="col me-auto">
-				<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
-					{{ range ( where site.RegularPages "Section" "library" | first 3 ) }}
-					<div class="col">
-						<div class="card">
-							{{ $img := (.Resources.ByType "image").GetMatch "*featured*" }}
-							{{ $img = $img.Fit "2000x2000" }}
-							{{ with $img }}
-							<img src="{{ .Permalink }}" alt="{{ $.Title }}" class="card-img-top">
-							{{ end }}
-							<div class="card-body">
-								<h5 class="card-title">{{ .Title }}</h5>
-								<p class="card-text">
-									<figcaption class="blockquote-footer">{{ .Params.Author}}</figcaption>
-								</p>
-								<a href="{{ .Permalink }}" class="stretched-link"></a>
-							</div>
-						</div>  
-					</div>
-					{{end}}
-				</div>
-			</div>
-		</div>
-	</div>
+            <div class="col me-auto">
+                <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3"> <!-- 改为4列布局，减少间距 -->
+                    {{ $bangumi := getJSON "data/bangumi.json" }}
+                    {{ range first 4 $bangumi }} <!-- 显示4个 -->
+                    <div class="col">
+                        <div class="card top-highlight h-100" style="max-width: 240px; margin: 0 auto;">
+                            <!-- 图片区域 -->
+                            <div class="text-center pt-2" style="max-height: 500px; overflow: hidden;">
+                                <img src="{{ .subject.images.common }}" alt="{{ .subject.name_cn }}" class="img-fluid"
+                                    style="max-height: 500px; width: auto; max-width: 100%;" loading="lazy">
+                            </div>
+            
+                            <!-- 卡片内容 -->
+                            <div class="card-body p-2">
+                                <h6 class="card-title mb-1" style="font-size: 0.9rem;">{{ .subject.name_cn }}</h6>
+                                <div class="d-flex justify-content-between mb-1" style="font-size: 0.7rem;">
+                                    <span class="badge bg-primary py-1">⭐ {{ .subject.score }}</span>
+                                    <span class="badge bg-secondary py-1">{{ .rate }}</span>
+                                </div>
+                                <a href="https://bgm.tv/subject/{{ .subject_id }}" class="stretched-link"></a>
+                            </div>
+                        </div>
+                    </div>
+                    {{ end }}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {{ end }}
