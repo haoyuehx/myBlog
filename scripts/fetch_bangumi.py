@@ -20,10 +20,10 @@ def fetch_bangumi_data():
             offset += limit
 
         # 确保data目录存在
-        os.makedirs("data", exist_ok=True)
+        os.makedirs("../data", exist_ok=True)
         
         # 保存数据
-        with open("data/bangumi.json", "w", encoding="utf-8") as f:
+        with open("../data/bangumi.json", "w", encoding="utf-8") as f:
             json.dump(all_data, f, ensure_ascii=False, indent=2)
         print("Bangumi数据获取成功！")
     except Exception as e:

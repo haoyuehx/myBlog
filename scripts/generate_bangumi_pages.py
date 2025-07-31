@@ -4,7 +4,7 @@ import yaml
 from datetime import datetime
 
 # 读取Bangumi数据
-with open('data/bangumi.json', 'r', encoding='utf-8') as f:
+with open('../data/bangumi.json', 'r', encoding='utf-8') as f:
     bangumi_data = json.load(f)
 
 # 确保content/library目录存在

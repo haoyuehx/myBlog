@@ -31,7 +31,7 @@
 <div class="container">
     <div class="row" data-masonry='{"percentPosition": true }' id="blogposts">
         {{ $data := resources.GetRemote
-        "https://api.bgm.tv/v0/users/1024520/collections?subject_type=2&type=2&limit=30&offset=0" }}
+        "https://api.bgm.tv/v0/users/1024520/collections?subject_type=2&type=2&limit=40&offset=0" }}
         {{ with $data }}
         {{ $json := . | transform.Unmarshal }}
         {{ $bangumiList := $json.data | default (slice) }}
