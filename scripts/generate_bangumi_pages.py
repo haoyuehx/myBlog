@@ -8,12 +8,12 @@ with open('data/bangumi.json', 'r', encoding='utf-8') as f:
     bangumi_data = json.load(f)
 
 # 确保content/library目录存在
-os.makedirs('content/library', exist_ok=True)
+os.makedirs('../content/library', exist_ok=True)
 
 # 清空现有内容（保留_index.md）
-for item in os.listdir('content/library'):
-    if item != '_index.md' and os.path.isdir(f'content/library/{item}'):
-        os.system(f'rm -rf content/library/{item}')
+for item in os.listdir('../content/library'):
+    if item != '_index.md' and os.path.isdir(f'../content/library/{item}'):
+        os.system(f'rm -rf ../content/library/{item}')
 
 # 为每个番剧创建Markdown文件
 for item in bangumi_data:
@@ -21,7 +21,7 @@ for item in bangumi_data:
     subject_id = subject['id']
     
     # 创建目录
-    dir_name = f"content/library/{subject_id}"
+    dir_name = f"../content/library/{subject_id}"
     os.makedirs(dir_name, exist_ok=True)
     
     # 准备Front Matter
