@@ -1,13 +1,11 @@
 ---
-title: "Nigalya Ponya"
+title: "Thomas Lu/"
 date: 2015-01-01
-summary: "Himalayan red panda"
+summary: "Developer / Designer "
 layout: about
 ---
 
-I have a reddish-brown fur, a long, shaggy tail, and a waddling gait due to my shorter front legs; I'm roughly the size of a domestic cat, though with a longer body.
-I live in trees and feed mainly on bamboo, but I also eat eggs, birds, and insects.
+Hi, my name is Thomas 
+I am currently an undergraduate student at the School of Software Engineering, Beijing University of Aeronautics and Astronautics (BUAA).
 
-I joined the IUCN Endangered species red list in 2008 as a result of a constant population decline caused by habitat loss, poaching and inbreed depression.
-
-For more information, you can take a look at my [Wikipedia page](https://en.wikipedia.org/wiki/Red_panda_)
+I like playing volleyball and watching some animations in my spare time.
