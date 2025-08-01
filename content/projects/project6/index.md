@@ -423,3 +423,537 @@ mov 0x8(%rdx),%rdx 是典型的 ptr = ptr->next 操作
    0x00000000004011f5 <+257>:	jne    0x4011df <phase_6+235>
 ```
 得到phase_6
+
+## archlab
+
+## part B
+
+
+### part C
+Part C 在sim/pipe中进行。PIPE 是使用了转发技术的流水线化的Y86-64处理器。相比 Part B 增加了流水线寄存器和流水线控制逻辑。
+
+在本部分中，要通过修改pipe-full.hcl和ncopy.ys来优化程序，通过程序的效率，也就是 CPE 来计算分数
+
+先修改pipe-full.hcl，增加iaddq指令，修改过程参考 Part B 即可。
+
+稳妥起见，修改后还是应该测试一下这个模拟器，Makefile参考 Part B 部分进行同样的修改后编译。然后执行以下命令进行测试：
+
+```shell
+$ ./psim -t ../y86-code/asumi.yo
+$ cd ../ptest; make SIM=../pipe/psim
+$ cd ../ptest; make SIM=../pipe/psim TFLAGS=-i
+```
+
+全部都Succeeds就可以接下来优化`ncopy.ys`
+
+```C
+/* 
+ * ncopy - copy src to dst, returning number of positive ints
+ * contained in src array.
+ */
+word_t ncopy(word_t *src, word_t *dst, word_t len) {
+	word_t count = 0;
+    word_t val;
+    while (len > 0) {
+		val = *src++;
+        *dst = val;
+        if (val > 0) 
+            count++;
+        len--;
+    }
+    return count;    
+}
+```
+
+先对代码进行测试
+```shell
+$ ./correctness.pl -p     #结果是否正确
+$ ./benchmark.pl        #得出效率，分数越高结果越好
+```
+可以看到
+
+```shell
+68/68 pass correctness test
+Average CPE     15.18
+Score   0.0/60.0
+```
+
+看到开始的时候`CPE`是`15.18`
+
+第一步优化我们可以将addq指令都替换为iaddq
+
+修改完后的代码
+```nasm
+# You can modify this portion
+	# Loop header
+	xorq %rax,%rax		# count = 0;
+	andq %rdx,%rdx		# len <= 0?
+	jle Done		# if so, goto Done:
+
+Loop:	
+    mrmovq (%rdi), %r10	# read val from src...
+	rmmovq %r10, (%rsi)	# ...and store it to dst
+	andq %r10, %r10		# val <= 0?
+	jle Npos		# if so, goto Npos:
+	iaddq $1, %rax		# count++
+Npos:
+    iaddq $-1, %rdx     # len--
+	iaddq $8, %rdi		# src++
+	iaddq $8, %rsi		# dst++
+	andq %rdx,%rdx		# len > 0?
+	jg Loop			# if so, goto Loop:
+```
+
+测试一下CPE
+
+```shell
+68/68 pass correctness test
+Average CPE     12.70
+Score   0.0/60.0
+```
+
+可以先使用一下循环展开(Loop Unrolling),通过增加每次迭代计算的元素数量，从而减少循环的迭代次数(原理可以阅读第五章循环展开一节)
+
+下面实现 2×1 循环展开：
+
+```nasm
+ncopy:
+	xorq %rax, %rax
+	iaddq $-2, %rdx			# len - 2 >= 0?
+	jl Rem
+Loop:
+	mrmovq (%rdi), %r8		# get *src
+	mrmovq 8(%rdi), %r9		# get *(src + 1)
+	rmmovq %r8, (%rsi)		# set *dst
+	rmmovq %r9, 8(%rsi)		# set *(dst + 1)
+	andq %r8, %r8			# val > 0?
+	jle LNP8
+	iaddq $1, %rax			# count++
+LNP8:
+	andq %r9, %r9			# val > 0?
+	jle LNP9
+	iaddq $1, %rax			# count++
+LNP9:
+	iaddq $16, %rdi			# src += 2
+	iaddq $16, %rsi			# dst += 2
+	iaddq $-2, %rdx			# len -= 2
+	jge Loop
+
+Rem:
+	iaddq $2, %rdx
+	jle Done
+
+	mrmovq (%rdi), %r8
+	rmmovq %r8, (%rsi)
+	andq %r8, %r8
+	jle Done
+	iaddq $1, %rax
+```
+测试一下CPE
+
+```shell
+68/68 pass correctness test
+Average CPE     8.82
+Score   33.5/60.0
+```
+
+进一步的优化考虑使用更多的寄存器来展开循环。因为 Y86-64 指令集仅支持 15 个寄存器，去掉已使用的寄存器和栈寄存器，剩余 10 个寄存器可用。所以最多能够编写 10×1 循环展开程序。
+
+```nasm
+ncopy:
+	iaddq $-10, %rdx      # 预减去10，为了判断是否有完整的10个元素可处理
+	jl Rem                # 若不足10个，跳转到处理剩余元素的部分
+
+# 主循环：每轮处理10个元素
+Loop:
+	# 加载源数据（每次偏移8字节）
+	mrmovq (%rdi), %r8
+	mrmovq 8(%rdi), %r9
+	mrmovq 16(%rdi), %r10
+	mrmovq 24(%rdi), %r11
+	mrmovq 32(%rdi), %r12
+	mrmovq 40(%rdi), %r13
+	mrmovq 48(%rdi), %r14
+	mrmovq 56(%rdi), %rcx
+	mrmovq 64(%rdi), %rbx
+	mrmovq 72(%rdi), %rbp
+
+	# 存储到目标地址
+	rmmovq %r8, (%rsi)
+	rmmovq %r9, 8(%rsi)
+	rmmovq %r10, 16(%rsi)
+	rmmovq %r11, 24(%rsi)
+	rmmovq %r12, 32(%rsi)
+	rmmovq %r13, 40(%rsi)
+	rmmovq %r14, 48(%rsi)
+	rmmovq %rcx, 56(%rsi)
+	rmmovq %rbx, 64(%rsi)
+	rmmovq %rbp, 72(%rsi)
+
+	# 分别判断每个值是否大于0（正数），是则计数器+1（在%rax中）
+	andq %r8, %r8
+	jle R10N8
+	iaddq $1, %rax
+R10N8:
+	andq %r9, %r9
+	jle R10N9
+	iaddq $1, %rax
+R10N9:
+	andq %r10, %r10
+	jle R10N10
+	iaddq $1, %rax
+R10N10:
+	andq %r11, %r11
+	jle R10N11
+	iaddq $1, %rax
+R10N11:
+	andq %r12, %r12
+	jle R10N12
+	iaddq $1, %rax
+R10N12:
+	andq %r13, %r13
+	jle R10N13
+	iaddq $1, %rax
+R10N13:
+	andq %r14, %r14
+	jle R10N14
+	iaddq $1, %rax
+R10N14:
+	andq %rcx, %rcx
+	jle R10N15
+	iaddq $1, %rax
+R10N15:
+	andq %rbx, %rbx
+	jle R10N16
+	iaddq $1, %rax
+R10N16:
+	andq %rbp, %rbp
+	jle R10N17
+	iaddq $1, %rax
+R10N17:
+	# 更新源地址、目标地址、剩余长度
+	iaddq $80, %rdi       # 10个元素 × 8字节 = 80字节
+	iaddq $80, %rsi
+	iaddq $-10, %rdx
+	jge Loop              # 若剩余 >=10，则继续循环
+
+# 处理剩余不足10个元素的情况（Rem部分）
+Rem:
+	iaddq $10, %rdx       # 把刚才多减的10加回来
+	jle Done              # 若 <= 0，直接结束
+
+	# 下面是使用条件跳转拆解 rem 元素数量的过程
+	iaddq $-4, %rdx
+	jge GE4               # 如果 >=4，进入 GE4
+	iaddq $2, %rdx
+	jl R1                 # 1个
+	je R2                 # 2个
+	jmp R3                # 3个
+
+# 处理4~9个元素
+GE4:
+	je R4                 # 4个
+	iaddq $-2, %rdx
+	jl R5                 # 5个
+	je R6                 # 6个
+
+	iaddq $-2, %rdx
+	jl R7                 # 7个
+	je R8                 # 8个
+
+# 9个元素需要执行所有R1~R9
+# 所以此处继续往下执行直到R9
+
+R9:
+	mrmovq 64(%rdi), %r8
+	rmmovq %r8, 64(%rsi)
+	andq %r8, %r8
+	jle R8
+	iaddq $1, %rax
+R8:
+	mrmovq 56(%rdi), %r8
+	rmmovq %r8, 56(%rsi)
+	andq %r8, %r8
+	jle R7
+	iaddq $1, %rax
+R7:
+	mrmovq 48(%rdi), %r8
+	rmmovq %r8, 48(%rsi)
+	andq %r8, %r8
+	jle R6
+	iaddq $1, %rax
+R6:
+	mrmovq 40(%rdi), %r8
+	rmmovq %r8, 40(%rsi)
+	andq %r8, %r8
+	jle R5
+	iaddq $1, %rax
+R5:
+	mrmovq 32(%rdi), %r8
+	rmmovq %r8, 32(%rsi)
+	andq %r8, %r8
+	jle R4
+	iaddq $1, %rax
+R4:
+	mrmovq 24(%rdi), %r8
+	rmmovq %r8, 24(%rsi)
+	andq %r8, %r8
+	jle R3
+	iaddq $1, %rax
+R3:
+	mrmovq 16(%rdi), %r8
+	rmmovq %r8, 16(%rsi)
+	andq %r8, %r8
+	jle R2
+	iaddq $1, %rax
+R2:
+	mrmovq 8(%rdi), %r8
+	rmmovq %r8, 8(%rsi)
+	andq %r8, %r8
+	jle R1
+	iaddq $1, %rax
+R1:
+	mrmovq (%rdi), %r8
+	rmmovq %r8, (%rsi)
+	andq %r8, %r8
+	jle Done
+	iaddq $1, %rax
+
+Done:
+	# 函数结束（通常由 ret 指令在主程序中处理）
+```
+
+测试一下CPE,可以看到有显著提升
+
+```shell
+68/68 pass correctness test
+Average CPE     7.94
+Score   51.2/60.0
+```
+
+继续观察上述代码，还有 2 处可以优化：
+
+1. 每个 case 下，mrmovq 和 rmmovq 存在数据相关。
+2. 余数为 0 时，单独特判。假设每个余数等概率出现，那么很大概率这个条件跳转不会发生，从而增加了 CPE。所以，余数二分查找时要把 0 考虑进去。
+
+针对 1 的优化，从 mrmovq 和 rmmovq 不会设置条件码入手，将这两条指令插入到 andq %r8, %r8 和 jle 之间，从而避免流水线暂停（这两条指令相邻时暂停一周期）。解决方法是：将前一个数的正负判断延迟到当前模块处理。具体实现为:
+```nasm
+Rn:
+	andq %r8, %r8				# %r8=src[n - 1]
+	mrmovq 8n(%rdi), %r8		# 加载src[n]到%r8
+	jle EnNP
+	iaddq $1, %rax
+EnNP:
+	rmmovq %r8, 8n(%rsi)		# 设置dst[n]=%r8
+```
+
+针对 2 的优化，要注意二分查找的分界点，该过程可通过动态规划来计算最少的指令数：
+```C++
+#include<bits/stdc++.h>
+using namespace std;
+#define mp make_pair
+#define rep(i,l,r) for(int i=(l);i<(r);++i)
+#define per(i,l,r) for(int i=(r)-1;i>=(l);--i)
+#define dd(x) cout << #x << " = " << x << ", "
+#define de(x) cout << #x << " = " << x << endl
+//-------
+
+map<pair<int,int>, int> dp;
+
+int dfs(pair<int, int> ij) {
+	if (ij.first >= ij.second) return 0;
+	if (dp.count(ij)) return dp[ij];
+	int l, r;
+	tie(l, r) = ij;
+	pair<int, int> ret(INT_MAX, INT_MAX);
+	rep(m, l, r + 1) {
+		int sum = 1 + 1;	// test; je
+		if (l <= m - 1) 	// jl, 左分支
+			sum += (l < m - 1) + (m - l) + dfs(mp(l, m - 1));
+		if (m + 1 <= r)		// jg, 右分支
+			sum += (m + 1 < r) + (r - m) + dfs(mp(m + 1, r));
+		ret = min(ret, mp(sum, m));
+	}
+	dd(l), dd(r), dd(ret.first), de(ret.second);
+	return dp[ij] = ret.first;
+}
+
+int main() {
+	int l, r; cin >> l >> r;
+	dd(l), de(r);
+	int ans = dfs(mp(l, r));
+	de(ans);
+	return 0;
+}
+```
+在实现过程反复测试中，发现处理器更倾向于总是跳转，结合具体的查找实现，最终的关键点定位：1，3，5，7，8
+优化后的版本:
+```nasm
+ncopy:
+	iaddq $-10, %rdx
+	jl Rem
+
+Loop:
+	mrmovq (%rdi), %r8
+	mrmovq 8(%rdi), %r9
+	mrmovq 16(%rdi), %r10
+	mrmovq 24(%rdi), %r11
+	mrmovq 32(%rdi), %r12
+	mrmovq 40(%rdi), %r13
+	mrmovq 48(%rdi), %r14
+	mrmovq 56(%rdi), %rcx
+	mrmovq 64(%rdi), %rbx
+	mrmovq 72(%rdi), %rbp
+	rmmovq %r8, (%rsi)
+	rmmovq %r9, 8(%rsi)
+	rmmovq %r10, 16(%rsi)
+	rmmovq %r11, 24(%rsi)
+	rmmovq %r12, 32(%rsi)
+	rmmovq %r13, 40(%rsi)
+	rmmovq %r14, 48(%rsi)
+	rmmovq %rcx, 56(%rsi)
+	rmmovq %rbx, 64(%rsi)
+	rmmovq %rbp, 72(%rsi)
+	andq %r8, %r8
+	jle R10N8
+	iaddq $1, %rax
+R10N8:
+	andq %r9, %r9
+	jle R10N9
+	iaddq $1, %rax
+R10N9:
+	andq %r10, %r10
+	jle R10N10
+	iaddq $1, %rax
+R10N10:
+	andq %r11, %r11
+	jle R10N11
+	iaddq $1, %rax
+R10N11:
+	andq %r12, %r12
+	jle R10N12
+	iaddq $1, %rax
+R10N12:
+	andq %r13, %r13
+	jle R10N13
+	iaddq $1, %rax
+R10N13:
+	andq %r14, %r14
+	jle R10N14
+	iaddq $1, %rax
+R10N14:
+	andq %rcx, %rcx
+	jle R10N15
+	iaddq $1, %rax
+R10N15:
+	andq %rbx, %rbx
+	jle R10N16
+	iaddq $1, %rax
+R10N16:
+	andq %rbp, %rbp
+	jle R10N17
+	iaddq $1, %rax
+R10N17:
+	iaddq $80, %rdi
+	iaddq $80, %rsi
+	iaddq $-10, %rdx
+	jge Loop
+
+Rem:
+	mrmovq (%rdi), %r8
+	iaddq $7, %rdx
+	jge RGE3
+R02:
+	iaddq $2, %rdx
+	jl Done
+	rmmovq %r8, (%rsi)
+	je R1
+	jmp R2
+
+R46:
+	iaddq $2, %rdx
+	jl R4
+	je R5
+	jmp R6
+
+RGE3:
+	rmmovq %r8, (%rsi)
+	je R3
+
+R49:	
+	iaddq $-4, %rdx
+	jl R46
+	je R7
+
+R89:
+	iaddq $-1, %rdx
+	je R8
+
+R9:
+	andq %r8, %r8
+	mrmovq 64(%rdi), %r8
+	jle R9NP
+	iaddq $1, %rax
+	R9NP:
+	rmmovq %r8, 64(%rsi)
+R8:
+	andq %r8, %r8
+	mrmovq 56(%rdi), %r8
+	jle R8NP
+	iaddq $1, %rax
+	R8NP:
+	rmmovq %r8, 56(%rsi)
+R7:
+	andq %r8, %r8
+	mrmovq 48(%rdi), %r8
+	jle R7NP
+	iaddq $1, %rax
+	R7NP:
+	rmmovq %r8, 48(%rsi)
+R6:
+	andq %r8, %r8
+	mrmovq 40(%rdi), %r8
+	jle R6NP
+	iaddq $1, %rax
+	R6NP:
+	rmmovq %r8, 40(%rsi)
+R5:
+	andq %r8, %r8
+	mrmovq 32(%rdi), %r8
+	jle R5NP
+	iaddq $1, %rax
+	R5NP:
+	rmmovq %r8, 32(%rsi)
+R4:
+	andq %r8, %r8
+	mrmovq 24(%rdi), %r8
+	jle R4NP
+	iaddq $1, %rax
+	R4NP:
+	rmmovq %r8, 24(%rsi)
+R3:
+	andq %r8, %r8
+	mrmovq 16(%rdi), %r8
+	jle R3NP
+	iaddq $1, %rax
+	R3NP:
+	rmmovq %r8, 16(%rsi)
+R2:
+	andq %r8, %r8
+	mrmovq 8(%rdi), %r8
+	jle R2NP
+	iaddq $1, %rax
+	R2NP:
+	rmmovq %r8, 8(%rsi)
+R1:
+	andq %r8, %r8
+	jle Done
+	iaddq $1, %rax
+```
+测试一下CPE
+
+```shell
+68/68 pass correctness test
+Average CPE     7.49
+Score   60.0/60.0
+```
