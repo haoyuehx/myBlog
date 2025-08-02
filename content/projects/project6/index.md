@@ -957,3 +957,250 @@ R1:
 Average CPE     7.49
 Score   60.0/60.0
 ```
+
+
+
+```C
+void transpose_submit(int M, int N, int A[N][M], int B[M][N])
+{
+    if(M == 32){
+        for (int i = 0; i < 32; i++) {
+            for (int j = 0; j < 32 ; j++) {
+                int temp = A[i][j];
+                B[j][i] = temp;
+            }
+        }
+    }
+}
+```
+```shell
+$ ./test-trans -M 32 -N 32
+
+Function 0 (2 total)
+Step 1: Validating and generating memory traces
+Step 2: Evaluating performance (s=5, E=1, b=5)
+func 0 (Transpose submission): hits:869, misses:1184, evictions:1152
+
+Function 1 (2 total)
+Step 1: Validating and generating memory traces
+Step 2: Evaluating performance (s=5, E=1, b=5)
+func 1 (Simple row-wise scan transpose): hits:869, misses:1184, evictions:1152
+
+Summary for official submission (func 0): correctness=1 misses=1184
+
+TEST_TRANS_RESULTS=1:1184
+```
+
+```C
+char trans_desc[] = "Simple row-wise scan transpose";
+void transtranspose_submit(int M, int N, int A[N][M], int B[M][N])
+{
+    int i, j;
+
+    for (i = 0; i < N; i+=8) {
+        for (j = 0; j < M; j+=8) {
+            for (int m = i; m < i + 8; ++m){
+			    for (int n = j; n < j + 8; ++n){
+					B[n][m] = A[m][n];
+				}
+            }           
+        }
+    }    
+}
+```
+
+```shell
+./test-trans -M 32 -N 32
+
+Function 0 (2 total)
+Step 1: Validating and generating memory traces
+Step 2: Evaluating performance (s=5, E=1, b=5)
+func 0 (Transpose submission): hits:1709, misses:344, evictions:312
+
+Function 1 (2 total)
+Step 1: Validating and generating memory traces
+Step 2: Evaluating performance (s=5, E=1, b=5)
+func 1 (Simple row-wise scan transpose): hits:869, misses:1184, evictions:1152
+
+Summary for official submission (func 0): correctness=1 misses=344
+
+TEST_TRANS_RESULTS=1:344
+```
+```C
+void transpose_submit(int M, int N, int A[N][M], int B[M][N])
+{
+    int i, j, k;
+
+    for (i = 0; i < N; i+=8) {
+        for (j = 0; j < M; j+=8) {
+            for(k = i; k < (i + 8); ++k){
+				int v1 = A[k][j];
+				int v2 = A[k][j+1];
+				int v3 = A[k][j+2];
+				int v4 = A[k][j+3];
+				int v5 = A[k][j+4];
+				int v6 = A[k][j+5];
+				int v7 = A[k][j+6];			
+				int v8 = A[k][j+7];
+				B[j][k] = v1;
+				B[j+1][k] = v2;
+				B[j+2][k] = v3;
+				B[j+3][k] = v4;
+				B[j+4][k] = v5;
+				B[j+5][k] = v6;
+				B[j+6][k] = v7;
+				B[j+7][k] = v8;
+			}
+        }
+    }
+}
+```
+```shell
+./test-trans -M 32 -N 32
+
+Function 0 (2 total)
+Step 1: Validating and generating memory traces
+Step 2: Evaluating performance (s=5, E=1, b=5)
+func 0 (Transpose submission): hits:1765, misses:288, evictions:256
+
+Function 1 (2 total)
+Step 1: Validating and generating memory traces
+Step 2: Evaluating performance (s=5, E=1, b=5)
+func 1 (Simple row-wise scan transpose): hits:869, misses:1184, evictions:1152
+
+Summary for official submission (func 0): correctness=1 misses=288
+
+TEST_TRANS_RESULTS=1:288
+```
+
+```shell
+$ ./test-trans -M 64 -N 64
+
+Function 0 (2 total)
+Step 1: Validating and generating memory traces
+Step 2: Evaluating performance (s=5, E=1, b=5)
+func 0 (Transpose submission): hits:3585, misses:4612, evictions:4580
+
+Function 1 (2 total)
+Step 1: Validating and generating memory traces
+Step 2: Evaluating performance (s=5, E=1, b=5)
+func 1 (Simple row-wise scan transpose): hits:3473, misses:4724, evictions:4692
+
+Summary for official submission (func 0): correctness=1 misses=4612
+
+TEST_TRANS_RESULTS=1:4612
+```
+```C
+void transpose_submit(int M, int N, int A[N][M], int B[M][N])
+{
+    int i, j, k;
+
+    for (i = 0; i < N; i+=4) {
+        for (j = 0; j < M; j+=4) {
+            for(k = i; k < (i + 4); ++k){
+				int v1 = A[k][j];
+				int v2 = A[k][j+1];
+				int v3 = A[k][j+2];
+				int v4 = A[k][j+3];
+				B[j][k] = v1;
+				B[j+1][k] = v2;
+				B[j+2][k] = v3;
+				B[j+3][k] = v4;
+			}          
+        }
+    }    
+}
+```
+```shell
+$ ./test-trans -M 64 -N 64
+
+Function 0 (2 total)
+Step 1: Validating and generating memory traces
+Step 2: Evaluating performance (s=5, E=1, b=5)
+func 0 (Transpose submission): hits:6497, misses:1700, evictions:1668
+
+Function 1 (2 total)
+Step 1: Validating and generating memory traces
+Step 2: Evaluating performance (s=5, E=1, b=5)
+func 1 (Simple row-wise scan transpose): hits:3473, misses:4724, evictions:4692
+
+Summary for official submission (func 0): correctness=1 misses=1700
+
+TEST_TRANS_RESULTS=1:1700
+```
+https://zhuanlan.zhihu.com/p/42754565
+```C
+if (M == 64) {
+    int i, j;
+    int x1,x2,x3,x4,x5,x6,x7,x8;
+    for (i = 0; i < N; i += 8) {
+        for (j = 0; j < M; j += 8) {
+            for (int x = i; x < i + 4; ++x){
+                x1 = A[x][j]; x2 = A[x][j+1]; x3 = A[x][j+2]; x4 = A[x][j+3];
+                x5 = A[x][j+4]; x6 = A[x][j+5]; x7 = A[x][j+6]; x8 = A[x][j+7];
+                
+                B[j][x] = x1; B[j+1][x] = x2; B[j+2][x] = x3; B[j+3][x] = x4;
+                B[j][x+4] = x5; B[j+1][x+4] = x6; B[j+2][x+4] = x7; B[j+3][x+4] = x8;
+            }
+            for (int y = j; y < j + 4; ++y){
+                x1 = A[i+4][y]; x2 = A[i+5][y]; x3 = A[i+6][y]; x4 = A[i+7][y];
+                x5 = B[y][i+4]; x6 = B[y][i+5]; x7 = B[y][i+6]; x8 = B[y][i+7];
+                
+                B[y][i+4] = x1; B[y][i+5] = x2; B[y][i+6] = x3; B[y][i+7] = x4;
+                B[y+4][i] = x5; B[y+4][i+1] = x6; B[y+4][i+2] = x7; B[y+4][i+3] = x8;
+            }
+            for (int x = i + 4; x < i + 8; ++x){
+                x1 = A[x][j+4]; x2 = A[x][j+5]; x3 = A[x][j+6]; x4 = A[x][j+7];
+                B[j+4][x] = x1; B[j+5][x] = x2; B[j+6][x] = x3; B[j+7][x] = x4;
+            }
+        }
+    }
+}
+```
+```shell
+$ ./test-trans -M 64 -N 64
+
+Function 0 (2 total)
+Step 1: Validating and generating memory traces
+Step 2: Evaluating performance (s=5, E=1, b=5)
+func 0 (Transpose submission): hits:9065, misses:1180, evictions:1148
+
+Function 1 (2 total)
+Step 1: Validating and generating memory traces
+Step 2: Evaluating performance (s=5, E=1, b=5)
+func 1 (Simple row-wise scan transpose): hits:3473, misses:4724, evictions:4692
+
+Summary for official submission (func 0): correctness=1 misses=1180
+
+TEST_TRANS_RESULTS=1:1180
+```
+
+```shell
+$ python3 driver.py
+Part A: Testing cache simulator
+Running ./test-csim
+                        Your simulator     Reference simulator
+Points (s,E,b)    Hits  Misses  Evicts    Hits  Misses  Evicts
+     3 (1,1,1)       9       8       6       9       8       6  traces/yi2.trace
+     3 (4,2,4)       4       5       2       4       5       2  traces/yi.trace
+     3 (2,1,4)       2       3       1       2       3       1  traces/dave.trace
+     3 (2,1,3)     167      71      67     167      71      67  traces/trans.trace
+     3 (2,2,3)     201      37      29     201      37      29  traces/trans.trace
+     3 (2,4,3)     212      26      10     212      26      10  traces/trans.trace
+     3 (5,1,5)     231       7       0     231       7       0  traces/trans.trace
+     6 (5,1,5)  265189   21775   21743  265189   21775   21743  traces/long.trace
+    27
+
+
+Part B: Testing transpose function
+Running ./test-trans -M 32 -N 32
+Running ./test-trans -M 64 -N 64
+Running ./test-trans -M 61 -N 67
+
+Cache Lab summary:
+                        Points   Max pts      Misses
+Csim correctness          27.0        27
+Trans perf 32x32           8.0         8         288
+Trans perf 64x64           8.0         8        1180
+Trans perf 61x67          10.0        10        1906
+          Total points    53.0        53
