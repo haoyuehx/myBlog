@@ -42,4 +42,5 @@
     {{ if .IsHome }}{{ $title = .Site.Title }}{{ end }}
     <title>{{ $title }}</title>
     <meta name="description" content="{{ if .IsPage }}{{ .Summary }}{{ else }}{{ if .IsHome }}{{ .Site.Params.description }}{{ else }}{{ end }}{{ end }}">
+    <meta http-equiv="Content-Security-Policy" content="img-src 'self' https://ghchart.rshah.org; default-src 'self';">
 </head>
