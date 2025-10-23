@@ -1,0 +1,38 @@
+# Hugo 静态网站的 .gitignore 文件
+
+# 1. 编译生成的文件
+# --------------------
+# 忽略 Hugo 生成的静态网站输出目录，默认是 public/
+# 除非你将整个仓库用于发布（不推荐），否则不应提交此文件夹。
+# 如果你使用 GitHub Actions 或其他 CI/CD 工具，通常会忽略 public/ 目录。
+public/
+resources/
+
+# 忽略 Hugo 缓存目录
+.hugo_build.lock
+.cache/
+
+# 2. 依赖/工具/OS 文件
+# --------------------
+# 忽略主题子模块（如果你使用 git submodule 来管理主题）
+# 如果你直接将主题文件复制到 themes/ 中，可以忽略此项
+# themes/*/
+# 如果你使用 go modules 管理主题依赖，忽略 go.mod 和 go.sum
+# go.mod
+# go.sum
+
+# 操作系统和编辑器文件
+.DS_Store
+Thumbs.db
+*.bak
+
+# 3. VS Code 配置（可选）
+# -------------------------
+# 忽略 VS Code 的本地设置
+.vscode/
+
+# 4. 敏感数据（可选，根据需要添加）
+# --------------------------------
+# 忽略任何包含密码、API 密钥等敏感信息的配置文件
+# config/development.toml
+# .env
