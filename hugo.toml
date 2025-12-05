@@ -10,45 +10,47 @@ copyright = "Haoyuehx ©"
   initials = "Haoyue"
   googleAnalytics = ""
 
-  [[params.social]]
-    name = "Bilibili"
-    link = "https://space.bilibili.com/3494363854276671"
-    icon = "fab fa-bilibili"
+# config.toml 修改后
+[[params.social]]
+  name = "Bilibili"
+  link = "https://space.bilibili.com/3494363854276671"
+  icon = "fa-brands fa-bilibili" # fab -> fa-brands
 
-  [[params.social]]
+    [[params.social]]
     name = "QQ" 
     link = "#"
-    icon = "fab fa-qq"
+    icon = "fa-brands fa-qq" # fab -> fa-brands
 
-  [[params.social]]
+    [[params.social]]
     name = "Weixin" 
     link = "#"
-    icon = "fab fa-weixin"
+    icon = "fa-brands fa-weixin" # fab -> fa-brands
 
-  [[params.social]]
+    [[params.social]]
     name = "Telegram" 
     link = "https://t.me/haoyuehx"
-    icon = "fab fa-telegram"
+    icon = "fa-brands fa-telegram" # fab -> fa-brands
 
-  [[params.social]]
+    [[params.social]]
     name = "Mail" 
     link = "#"
-    icon = "fas fa-envelope"
+    icon = "fa-solid fa-envelope" # fas -> fa-solid
 
-  [[params.social]]
+    [[params.social]]
     name = "Twitter"
     link = "https://x.com/Haoyuehx"
-    icon = "fab fa-twitter"
+    # 推荐使用新的 X 平台图标名 fa-x-twitter
+    icon = "fa-brands fa-x-twitter" 
 
-  [[params.social]]
+    [[params.social]]
     name = "Zhihu"
     link = "https://www.zhihu.com/people/4skcf3"
-    icon = "fab fa-zhihu"
+    icon = "fa-brands fa-zhihu" # fab -> fa-brands
 
-  [[params.social]]
+    [[params.social]]
     name = "Github"
     link = "https://github.com/Haoyuehexi"
-    icon = "fab fa-github"
+    icon = "fa-brands fa-github" # fab -> fa-brands
 
 
 [menu]

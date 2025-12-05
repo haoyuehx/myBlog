@@ -14,8 +14,8 @@
     {{/* KaTeX */}}
     <link rel="stylesheet" href="https://cdn.jsdmirror.com/npm/katex@0.16.11/dist/katex.min.css" />
     <script defer src="https://cdn.jsdmirror.com/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
-    <script defer src="https://cdn.jsdmirror.com/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
-        onload="renderMathInElement(document.body, {
+    <script defer src="https://cdn.jsdmirror.com/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+        crossorigin="anonymous" onload="renderMathInElement(document.body, {
               delimiters: [
                 { left: '$$', right: '$$', display: true },
                 { left: '$', right: '$', display: false }
@@ -25,11 +25,13 @@
     <!-- Enable Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;600;700;800&family=Frank+Ruhl+Libre:wght@200;300;400;500;600&family=Encode+Sans+Semi+Condensed:wght@400&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;600;700;800&family=Frank+Ruhl+Libre:wght@200;300;400;500;600&family=Encode+Sans+Semi+Condensed:wght@400&display=swap"
+        rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <!-- CSS Styles (including Bootstrap 5 and FontAwesome 6) -->
     <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="/css/all.min.css">
+    <!-- <link rel="stylesheet" type="text/css" href="/css/all.min.css"> -->
     <link disabled id="dark-mode-theme" rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" type="text/css" href="/css/style.css">
     <link rel="stylesheet" type="text/css" href="/css/my_style.css">
@@ -41,6 +43,12 @@
     {{ $title := print .Site.Title " | " .Title }}
     {{ if .IsHome }}{{ $title = .Site.Title }}{{ end }}
     <title>{{ $title }}</title>
-    <meta name="description" content="{{ if .IsPage }}{{ .Summary }}{{ else }}{{ if .IsHome }}{{ .Site.Params.description }}{{ else }}{{ end }}{{ end }}">
-    <meta http-equiv="Content-Security-Policy" content="img-src 'self' https://ghchart.rshah.org; default-src 'self';">
+    <meta name="description"
+        content="{{ if .IsPage }}{{ .Summary }}{{ else }}{{ if .IsHome }}{{ .Site.Params.description }}{{ else }}{{ end }}{{ end }}">
+    <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self'; 
+    img-src 'self' https://ghchart.rshah.org; 
+    style-src 'self' https://cdnjs.cloudflare.com https://fonts.googleapis.com; 
+    font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;
+">
 </head>
