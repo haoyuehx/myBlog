@@ -1,3 +1,13 @@
+---
+title: "卡特兰数"
+date: 2025-12-07
+lastmod: 2025-12-07
+draft: false
+garden_tags: ["algorithm"]
+summary: " "
+status: "growing"
+---
+
 ## 引入
 
 Catalan 数经常出现在各类计数问题中。比利时数学家 Eugène Charles Catalan 在 1958 年研究括号序列计数问题时发现了这一数列，它也因此得名。清朝数学家明安图早在 18 世纪 30 年代就已经发现这一数列。
