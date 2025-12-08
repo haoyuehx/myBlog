@@ -168,7 +168,7 @@ Idx Name          Size      VMA               LMA               File off  Algn
 ,由此验证了链接的规则
 
 ## 目标文件的三种形式
-1. 可重定位目标文件(relocatable object file: .o(Linux); .obj(Windows))
+1. 可重定位目标文件(relocatable object file: .a(Linux); .obj(Windows))
     - 包含二进制代码和数据
     - 其形式可以在编译时与其他可重定位目标文件合并起来，创建一个可执行目标文件
 2. 可执行目标文件
