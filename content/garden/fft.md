@@ -7,7 +7,7 @@ garden_tags: ["algorithm"]
 summary: " "
 status: "growing"
 ---
-
+# 多项式乘法
 从多项式的乘法引入，
 $A(x)$, $B(x)$, degree-bound $n$  最高此项为$n$
 
@@ -28,29 +28,18 @@ where, $$ c_j = a_0 b_j + a_1 b_{j-1} + \cdots + a_k b_{j-k} + \cdots + a_j b_0 
 
 为了理解FFT我们先从离散傅利叶变换DFT开始讲，还是回到刚才那个多项式乘法的例子。一个多项式，我们从函数的视角来看，提取每一个项的系数，我们可以将一个n次多项式写成一个n维向量。
 
+# 点表示函数
 换一种思路，我们是不是也可以用n个离散的点来代表一个函数。二次函数中我们如果知道三个点，可以通过解方程的方式将每一项的系数解出来，那是不是n次方程也可以用n个点来表示。
+
+<div>
 $$
-\begin{pmatrix}
-y_0 \\
-y_1 \\
-\vdots \\
-y_{n-1}
-\end{pmatrix}
-=
-\begin{pmatrix}
-1 & x_0 & x_0^2 & \cdots & x_0^{n-1} \\
-1 & x_1 & x_1^2 & \cdots & x_1^{n-1} \\
-\vdots & \vdots & \vdots & \ddots & \vdots \\
-1 & x_{n-1} & x_{n-1}^2 & \cdots & x_{n-1}^{n-1}
-\end{pmatrix}
-\begin{pmatrix}
-a_0 \\
-a_1 \\
-\vdots \\
-a_{n-1}
-\end{pmatrix}
-= V(x_0, x_1, \cdots, x_{n-1}) \cdot a
+\begin{aligned}
+\begin{pmatrix} y_0 \\ y_1 \\ \vdots \\ y_{n-1} \end{pmatrix} 
+&= \begin{pmatrix} 1 & x_0 & x_0^2 & \cdots & x_0^{n-1} \\ 1 & x_1 & x_1^2 & \cdots & x_1^{n-1} \\ \vdots & \vdots & \vdots & \ddots & \vdots \\ 1 & x_{n-1} & x_{n-1}^2 & \cdots & x_{n-1}^{n-1} \end{pmatrix} \begin{pmatrix} a_0 \\ a_1 \\ \vdots \\ a_{n-1} \end{pmatrix} \\ % <-- 换行
+&= V(x_0, x_1, \cdots, x_{n-1}) \cdot a
+\end{aligned}
 $$
+</div>
 
 如果用点来表示的话，两个多项式相乘就可以用对应x处的值相乘得到2n+1个点解出原方程，我们就将之间复杂度降低到$O(n)$,极大的提高了计算效率!
 
